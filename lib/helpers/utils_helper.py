@@ -3,7 +3,7 @@ import numpy as np
 import logging
 import random
 import math
-from collections import Iterable
+from collections.abc import Iterable
 
 
 def create_logger(log_path, log_file, rank=0):

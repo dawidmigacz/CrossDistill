@@ -1,0 +1,7 @@
+2023-11-08 12:54:59,353   INFO  ###################  Training  ##################
+2023-11-08 12:54:59,354   INFO  Batch Size: 12
+2023-11-08 12:54:59,354   INFO  Learning Rate: 0.001250
+2023-11-08 12:54:59,355   INFO  ==> Loading from checkpoint './rgb_pretrain.pth'
+2023-11-08 12:54:59,978   INFO  ==> Done
+2023-11-08 12:54:59,980   INFO  ==> Loading from checkpoint './depth_pretrain.pth'
+2023-11-08 12:55:00,564   INFO  ==> Done

@@ -10,7 +10,8 @@ BatchNorm = nn.BatchNorm2d
 
 
 def get_model_url(data='imagenet', name='dla34', hash='ba72cf86'):
-    return os.path.join('http://dl.yf.io/dla/models', data, '{}-{}.pth'.format(name, hash))
+    return 'http://dl.yf.io/dla/models/' + data + '/{}-{}.pth'.format(name, hash)
+    #return os.path.join('http://dl.yf.io/dla/models', data, '{}-{}.pth'.format(name, hash))
 
 
 def conv3x3(in_planes, out_planes, stride=1):

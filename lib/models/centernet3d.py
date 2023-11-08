@@ -51,7 +51,9 @@ class CenterNet3D(nn.Module):
 
     def forward(self, input):
         if self.model_type == 'centernet3d':
-            input = input['rgb']
+            pass
+            #print(input.size())
+            #input = input['rgb']
         feat_backbone = self.backbone(input)
         feat = self.neck(feat_backbone[self.first_level:])  # first_level = 2
 

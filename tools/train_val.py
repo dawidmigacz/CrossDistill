@@ -5,6 +5,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
 sys.path.append(ROOT_DIR)
 
+os.environ["KMP_DUPLICATE_LIB_OK"] = "1"
+
+
 import yaml
 import argparse
 import datetime
@@ -60,6 +63,7 @@ def main():
     # build model&&build optimizer
     if cfg['model']['type']=='centernet3d' or cfg['model']['type']=='distill':
         model = build_model(cfg['model'],'training')
+
         optimizer = build_optimizer(cfg['optimizer'], model)
         lr_scheduler, warmup_lr_scheduler = build_lr_scheduler(cfg['lr_scheduler'], optimizer, last_epoch=-1)
 

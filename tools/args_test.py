@@ -6,42 +6,26 @@ ROOT_DIR = os.path.dirname(BASE_DIR)
 sys.path.append(ROOT_DIR)
 
 import yaml
-import argparse
-import datetime
-import os
 
+
+from lib.models.centernet3d_distill import MonoDistill
 from lib.helpers.model_helper import build_model
-from lib.helpers.dataloader_helper import build_dataloader
-from lib.helpers.optimizer_helper import build_optimizer
-from lib.helpers.scheduler_helper import build_lr_scheduler
-from lib.helpers.trainer_helper import Trainer
-from lib.helpers.tester_helper import Tester
-from lib.helpers.utils_helper import create_logger
-from lib.helpers.utils_helper import set_random_seed
 
+model = MonoDistill()
 
-parser = argparse.ArgumentParser(description='Monocular 3D Object Detection')
-parser.add_argument('--config', dest='config', help='settings of detection in yaml format')
-parser.add_argument('-e', '--evaluate_only', action='store_true', default=False, help='evaluation only')
+from prettytable import PrettyTable
 
-args = parser.parse_args()
-
-
-
-def main():
-    assert (os.path.exists(args.config))
-    cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
-    set_random_seed(cfg.get('random_seed', 444))
-
-    log_path = ROOT_DIR + "/experiments/example/logs/"
-    if os.path.exists(log_path):
-        pass
-    else:
-        os.mkdir(log_path)
-    log_file = 'train.log.%s' % datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    logger = create_logger(log_path, log_file)
-
-    print(cfg)
-
-if __name__ == '__main__':
-    main()
+def count_parameters(model):
+    table = PrettyTable(["Modules", "Parameters"])
+    total_params = 0
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad:
+            continue
+        params = parameter.numel()
+        table.add_row([name, params])
+        total_params += params
+    print(table)
+    print(f"Total Trainable Params: {total_params}")
+    return total_params
+    
+count_parameters(model)

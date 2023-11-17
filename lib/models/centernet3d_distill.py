@@ -5,6 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+import sys
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
+sys.path.append(ROOT_DIR)
+
 from lib.models.fusion import Fusion
 from lib.models.centernet3d import CenterNet3D
 
@@ -21,8 +27,8 @@ class MonoDistill(nn.Module):
         assert downsample in [4, 8, 16, 32]
         super().__init__()
 
-        self.centernet_rgb = CenterNet3D(backbone=backbone, neck=neck, num_class=num_class, downsample=downsample, flag=flag, model_type=model_type)
-        self.centernet_depth = CenterNet3D(backbone=backbone, neck=neck, num_class=num_class, downsample=downsample, flag=flag, model_type=model_type)
+        self.centernet_rgb = CenterNet3D(backbone=backbone, neck=neck, num_class=num_class, downsample=downsample, flag=flag, model_type=model_type, modality='rgb')
+        self.centernet_depth = CenterNet3D(backbone=backbone, neck=neck, num_class=num_class, downsample=downsample, flag=flag, model_type=model_type, modality='depth')
 
         for i in self.centernet_depth.parameters():
             i.requires_grad = False
@@ -88,9 +94,18 @@ class MonoDistill(nn.Module):
 
         elif self.flag == 'testing':
             rgb = input['rgb']
-            rgb_feat, rgb_outputs = self.centernet_rgb(rgb)
-
-            return rgb_feat, rgb_outputs
+            
+            depth = input['depth']
+            
+            
+            # coin toss to choose rgb or depth
+            if np.random.rand() > 1:
+                rgb_feat, rgb_outputs = self.centernet_rgb(rgb)
+                return rgb_feat, rgb_outputs
+            else:
+                depth_feat,  depth_outputs = self.centernet_depth(depth)
+                return depth_feat, depth_outputs
+            
 
     def fill_fc_weights(self, layers):
         for m in layers.modules():
@@ -100,4 +115,9 @@ class MonoDistill(nn.Module):
                     nn.init.constant_(m.bias, 0)
 
 
-
+if __name__ == '__main__':
+    import torch
+    import os
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "1"
+    net = MonoDistill(backbone='dla34')
+    print(net)

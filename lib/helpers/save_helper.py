@@ -30,9 +30,10 @@ def save_checkpoint(state, filename):
     torch.save(state, filename)
 
 
-def load_checkpoint(model, optimizer, filename, map_location, logger=None):
+def load_checkpoint(model, optimizer, filename, map_location = "cuda:0", logger=None):
     if os.path.isfile(filename):
-        logger.info("==> Loading from checkpoint '{}'".format(filename))
+        if logger is not None:
+            logger.info("==> Loading from checkpoint '{}'".format(filename))
         checkpoint = torch.load(filename)
         #checkpoint = torch.load(filename, map_location)
         epoch = checkpoint.get('epoch', -1)
@@ -46,7 +47,8 @@ def load_checkpoint(model, optimizer, filename, map_location, logger=None):
             model.load_state_dict(new_state_dict)
         # if optimizer is not None and checkpoint['optimizer_state'] is not None:
         #     optimizer.load_state_dict(checkpoint['optimizer_state'])
-        logger.info("==> Done")
+        if logger is not None:
+            logger.info("==> Done")
     else:
         raise FileNotFoundError
 

@@ -31,7 +31,7 @@ lr_scheduler:
   decay_list: [90, 120]
 
 trainer:
-  max_epoch: 160
+  max_epoch: 10
   gpu_ids: 2,3
   save_frequency: 10 # checkpoint save interval (in epoch)
   model_save_path: 'monodistill'
@@ -41,7 +41,7 @@ trainer:
 
 tester:
   type: *dataset_type
-  mode: all   # 'single' or 'all'
-  checkpoint: 'distill/checkpoint_epoch_160.pth'  # for 'single' mode
+  mode: single   # 'single' or 'all'
+  checkpoint: './monodistill/distill.pth'  # for 'single' mode
   checkpoints_dir: 'monodistill'  # for 'all' model
   threshold: 0.2  # confidence filter

@@ -31,7 +31,7 @@ lr_scheduler:
   decay_list: [90, 120]
 
 trainer:
-  max_epoch: 140
+  max_epoch: 10
   gpu_ids: 0,1
   save_frequency: 10 # checkpoint save interval (in epoch)
   model_save_path: 'rgb_baseline'
@@ -42,6 +42,6 @@ trainer:
 tester:
   type: *dataset_type
   mode: single   # 'single' or 'all'
-  checkpoint: './rgb_baseline/checkpoint_epoch_140.pth'  # for 'single' mode
+  checkpoint: './rgb_baseline/rgb_pretrain.pth'  # for 'single' mode
   checkpoints_dir: 'rgb_baseline'  # for 'all' model
   threshold: 0.2  # confidence filter

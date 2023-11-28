@@ -6,6 +6,37 @@ import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
+
+from torchvision.ops import drop_block2d
+
+class DropBlock2d(nn.Module):
+    """
+    See :func:`drop_block2d`.
+    """
+
+    def __init__(self, p: float, block_size: int, inplace: bool = False, eps: float = 1e-06, training: bool = True) -> None:
+        super().__init__()
+
+        self.p = p
+        self.block_size = block_size
+        self.inplace = inplace
+        self.eps = eps
+        self.training = training
+
+    def forward(self, input):
+        """
+        Args:
+            input (Tensor): Input feature map on which some areas will be randomly
+                dropped.
+        Returns:
+            Tensor: The tensor after DropBlock layer.
+        """
+        return drop_block2d(input, self.p, self.block_size, self.inplace, self.eps, self.training)
+
+    def __repr__(self) -> str:
+        s = f"{self.__class__.__name__}(p={self.p}, block_size={self.block_size}, inplace={self.inplace})"
+        return s
+
 BatchNorm = nn.BatchNorm2d
 
 
@@ -21,13 +52,14 @@ def conv3x3(in_planes, out_planes, stride=1):
 
 
 class BasicBlock(nn.Module):
-    def __init__(self, inplanes, planes, stride=1, dilation=1):
+    def __init__(self, inplanes, planes, stride=1, dilation=1, dropblock=False):
         super(BasicBlock, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3,
                                stride=stride, padding=dilation,
                                bias=False, dilation=dilation)
         self.bn1 = BatchNorm(planes)
         self.relu = nn.ReLU(inplace=True)
+        self.dropblock = DropBlock2d(p=0.1, block_size=7, training=True) if dropblock else None
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
                                stride=1, padding=dilation,
                                bias=False, dilation=dilation)
@@ -40,8 +72,12 @@ class BasicBlock(nn.Module):
 
         out = self.conv1(x)
         out = self.bn1(out)
+        if self.dropblock is not None:
+            out = self.dropblock(out)
+            
         out = self.relu(out)
-
+       
+        
         out = self.conv2(out)
         out = self.bn2(out)
 
@@ -168,7 +204,7 @@ class Tree(nn.Module):
             root_dim += in_channels
         if levels == 1:
             self.tree1 = block(in_channels, out_channels, stride,
-                               dilation=dilation)
+                               dilation=dilation, dropblock=True)
             self.tree2 = block(out_channels, out_channels, 1,
                                dilation=dilation)
         else:

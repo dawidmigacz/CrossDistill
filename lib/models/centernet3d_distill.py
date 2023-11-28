@@ -99,12 +99,12 @@ class MonoDistill(nn.Module):
             
             
             # coin toss to choose rgb or depth
-            if np.random.rand() > 1:
-                rgb_feat, rgb_outputs = self.centernet_rgb(rgb)
-                return rgb_feat, rgb_outputs
+            if np.random.rand() > 0:
+                rgb_feat, rgb_outputs, rgb_ = self.centernet_rgb(rgb)
+                return rgb_feat, rgb_outputs, rgb_
             else:
-                depth_feat,  depth_outputs = self.centernet_depth(depth)
-                return depth_feat, depth_outputs
+                depth_feat,  depth_outputs, depth_ = self.centernet_depth(depth)
+                return depth_feat, depth_outputs, depth_
             
 
     def fill_fc_weights(self, layers):

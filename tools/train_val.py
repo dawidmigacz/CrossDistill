@@ -1,5 +1,6 @@
 import os
 import sys
+import 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -43,6 +44,17 @@ def main():
         os.mkdir(log_path)
     log_file = 'train.log.%s' % datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     logger = create_logger(log_path, log_file)
+
+    wandb.init(
+    # set the wandb project where this run will be logged
+    project="cross-distill",
+    
+    # track hyperparameters and run metadata
+    config={
+    "architecture": "RGB",
+    "epochs": 140,
+    }
+)
 
 
     # build dataloader

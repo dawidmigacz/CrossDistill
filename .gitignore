@@ -17,3 +17,15 @@ experiments/example/rgb_baseline/checkpoint_epoch_10.pth
 *.pth
 lib/datasets/kitti/__pycache__/kitti_dataset.cpython-311.pyc
 *.pyc
+experiments/example/logs/
+experiments/example/logs/train.log.20231108_122146
+experiments/example/logs/train.log.20231108_123141
+experiments/example/logs/train.log.20231108_124204
+experiments/example/logs/train.log.20231108_124408
+experiments/example/logs/train.log.20231108_124705
+experiments/example/logs/train.log.20231108_124949
+experiments/example/logs/train.log.20231108_125127
+experiments/example/logs/train.log.20231108_125209
+experiments/example/logs/train.log.20231108_125416
+experiments/example/logs/train.log.20231108_125458
+experiments/example/logs/train.log.20231108_125625

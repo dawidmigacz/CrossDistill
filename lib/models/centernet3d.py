@@ -60,7 +60,7 @@ class CenterNet3D(nn.Module):
 
     def forward(self, input):
         if self.model_type == 'centernet3d':
-            input = input['rgb'] # turn off when training
+            # input = input['rgb'] # turn off when training
             pass
             #print(input.size())
             

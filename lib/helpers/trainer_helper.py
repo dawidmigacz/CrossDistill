@@ -24,6 +24,7 @@ import math
 from progress.bar import Bar
 import time
 
+import wandb
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -184,7 +185,7 @@ class Trainer(object):
 
             # train one batch
             self.optimizer.zero_grad()
-            _, outputs = self.model(inputs['rgb'])
+            _, outputs, _ = self.model(inputs['rgb'])
 
             rgb_loss, rgb_stats_batch = compute_centernet3d_loss(outputs, targets)
             # depth_loss, depth_stats_batch = compute_depth_centernet3d_loss(depth_outputs, targets)
@@ -197,12 +198,14 @@ class Trainer(object):
             Bar.suffix = '{phase}: [{0}][{1}/{2}]|Tot: {total:} |ETA: {eta:} '.format(
                 self.epoch, batch_idx, num_iters, phase="train",
                 total=bar.elapsed_td, eta=bar.eta_td)
-
+            wandb_dict ={"epoch": self.epoch, "batch": batch_idx}
             for l in avg_loss_stats:
                 avg_loss_stats[l].update(
                     rgb_stats_batch[l], inputs['rgb'].shape[0])
                 Bar.suffix = Bar.suffix + '|{} {:.4f} '.format(l, avg_loss_stats[l].avg)
+                wandb_dict[l] = avg_loss_stats[l].avg
 
+            wandb.log(wandb_dict)
             bar.next()
         bar.finish()
 

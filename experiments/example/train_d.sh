@@ -7,7 +7,9 @@
 #SBATCH --mem=40G
 #SBATCH --gres=gpu
 
+
+
 CONFIG=$1
 
 module load CUDA
-python ../../tools/train_val.py --config ${CONFIG}
+python ../../tools/train_val.py --config kitti_example_distill.yaml -e

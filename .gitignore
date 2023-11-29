@@ -29,3 +29,5 @@ experiments/example/logs/train.log.20231108_125209
 experiments/example/logs/train.log.20231108_125416
 experiments/example/logs/train.log.20231108_125458
 experiments/example/logs/train.log.20231108_125625
+*.out
+*.err

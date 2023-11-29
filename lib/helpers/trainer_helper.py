@@ -254,11 +254,14 @@ class Trainer(object):
                 self.epoch, batch_idx, num_iters, phase="train",
                 total=bar.elapsed_td, eta=bar.eta_td)
 
+            wandb_dict ={"epoch": self.epoch, "batch": batch_idx}
             for l in avg_loss_stats:
                 avg_loss_stats[l].update(
                     stats_batch[l], inputs['rgb'].shape[0])
                 Bar.suffix = Bar.suffix + '|{} {:.4f} '.format(l, avg_loss_stats[l].avg)
+                wandb_dict[l] = avg_loss_stats[l].avg
 
+            wandb.log(wandb_dict)
             bar.next()
         bar.finish()
 

@@ -17,6 +17,7 @@ from lib.backbones.hourglass import load_pretrian_model
 from lib.helpers.decode_helper import extract_dets_from_outputs
 from lib.helpers.decode_helper import decode_detections
 
+
 class CenterNet3D(nn.Module):
     def __init__(self, backbone='dla34', neck='DLAUp', num_class=3, downsample=4, flag='training', model_type='centernet3d', modality='rgb'):
         """
@@ -77,7 +78,7 @@ class CenterNet3D(nn.Module):
         for head in self.heads:
             ret[head] = self.__getattr__(head)(feat)
 
-        return feat_backbone, ret
+        return feat_backbone, ret, feat
 
 
     def fill_fc_weights(self, layers):
@@ -95,70 +96,75 @@ if __name__ == '__main__':
     import os
     os.environ["KMP_DUPLICATE_LIB_OK"] = "1"
     net = CenterNet3D(backbone='dla34')
-
-    # pretrained_dict = torch.load('experiments/example/rgb_pretrain.pth')
-    # net.load_state_dict(pretrained_dict)
-
-    from lib.helpers.save_helper import load_checkpoint
-    load_checkpoint(model=net,
-                    optimizer=None,
-                    filename='experiments/example/rgb_pretrain.pth',
-                    map_location="cuda:0",
-                    logger=None)
-
-
     print(net)
-    import torchvision
 
-    input = torch.randn(1, 3, 384, 1280)
+    # # pretrained_dict = torch.load('experiments/example/rgb_pretrain.pth')
+    # # net.load_state_dict(pretrained_dict)
+
+    # from lib.helpers.save_helper import load_checkpoint
+    # load_checkpoint(model=net,
+    #                 optimizer=None,
+    #                 filename='experiments/example/rgb_pretrain.pth',
+    #                 map_location="cuda:0",
+    #                 logger=None)
+
+
     
-    resizer = torchvision.transforms.Resize([384, 1280])
-    input = resizer(torchvision.io.read_image("data/KITTI/object/training/image_2/000039.png")).resize(1, 3, 384, 1280).float()
+    # import torchvision
 
-    print(input.shape, input.dtype)
-    output = net(input)
-    print(len(output[0]))
+  
+    # resizer = torchvision.transforms.Resize([384, 1280])
+    # input = resizer(torchvision.io.read_image("data/KITTI/object/training/image_2/000039.png")).resize(1, 3, 384, 1280).float()
+
+    # print(input.shape, input.dtype)
+    # output = net(input)
+    # print(len(output[0]))
+    # for i in range(len(output[0])):
+    #     print(f"Size of element {i}: {output[0][i].size()}")
+
+    # print("o2 ", output[2].size())
+    # # print("output ", output[1].keys())
     # for i in output[1].keys():
     #     print(i, output[1][i].size())
-    #     img = output[1][i].detach().cpu().numpy()[0, 0]
-    #     img = (img * 255).astype(np.uint8)
-    #     cv2.imshow(i, img)
-    #     cv2.waitKey(0)
-    #     cv2.destroyAllWindows()
+    # #     img = output[1][i].detach().cpu().numpy()[0, 0]
+    # #     img = (img * 255).astype(np.uint8)
+    # #     cv2.imshow(i, img)
+    # #     cv2.waitKey(0)
+    # #     cv2.destroyAllWindows()
 
-    dets = extract_dets_from_outputs(output[1], K=100)
-    print(dets.size())
-    print(dets)
-    import matplotlib.pyplot as plt
+    # dets = extract_dets_from_outputs(output[1], K=100)
+    # print(dets.size())
+    # print(dets)
+    # import matplotlib.pyplot as plt
 
-    # img = dets.detach().cpu().numpy()[0]
-    # plt.imshow(img)
-    # plt.show()
+    # # img = dets.detach().cpu().numpy()[0]
+    # # plt.imshow(img)
+    # # plt.show()
 
-    cls_mean_size = np.array([[1.76255119, 0.66068622, 0.84422524],
-                            [1.52563191, 1.62856739, 3.52588311],
-                            [1.73698127, 0.59706367, 1.76282397]], dtype=np.float32) 
+    # cls_mean_size = np.array([[1.76255119, 0.66068622, 0.84422524],
+    #                         [1.52563191, 1.62856739, 3.52588311],
+    #                         [1.73698127, 0.59706367, 1.76282397]], dtype=np.float32) 
 
-    resolution = np.array([1280, 384])
-    img_size = np.array(input.size())
-    print(img_size)
-    features_size = resolution // 4
-    print(features_size)
-    info = {'img_id': [170],
-                'img_size': [[384, 1280]],
-                'bbox_downsample_ratio': [[4.0, 4.0]]}
+    # resolution = np.array([1280, 384])
+    # img_size = np.array(input.size())
+    # print(img_size)
+    # features_size = resolution // 4
+    # print(features_size)
+    # info = {'img_id': [170],
+    #             'img_size': [[384, 1280]],
+    #             'bbox_downsample_ratio': [[4.0, 4.0]]}
 
-    from lib.datasets.kitti.kitti_utils import get_calib_from_file
-    # import Calibration 
-    from lib.datasets.kitti.kitti_utils import Calibration
+    # from lib.datasets.kitti.kitti_utils import get_calib_from_file
+    # # import Calibration 
+    # from lib.datasets.kitti.kitti_utils import Calibration
 
-    calib_path = 'data/KITTI/object/training/calib/000039.txt'
-    calibs = [Calibration(calib_path)]
+    # calib_path = 'data/KITTI/object/training/calib/000039.txt'
+    # calibs = [Calibration(calib_path)]
 
-    detects = decode_detections(dets=dets.detach().numpy(),
-                                     info=info,
-                                     calibs=calibs,
-                                     cls_mean_size=cls_mean_size,
-                                     threshold=0.2)
-    # print(output[1]['heading'].size())
-    print(detects)
+    # detects = decode_detections(dets=dets.detach().numpy(),
+    #                                  info=info,
+    #                                  calibs=calibs,
+    #                                  cls_mean_size=cls_mean_size,
+    #                                  threshold=0.2)
+    # # print(output[1]['heading'].size())
+    # print(detects)

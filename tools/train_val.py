@@ -35,6 +35,7 @@ args = parser.parse_args()
 def main():
     assert (os.path.exists(args.config))
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    print(cfg)
     set_random_seed(cfg.get('random_seed', 444))
 
     log_path = ROOT_DIR + "/experiments/example/logs/"
@@ -45,25 +46,20 @@ def main():
     log_file = 'train.log.%s' % datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     logger = create_logger(log_path, log_file)
 
-    wandb.init(
-    # set the wandb project where this run will be logged
-    project="cross-distill",
-    
-    # track hyperparameters and run metadata
-    config={
-    "architecture": "RGB",
-    "epochs": 140,
-    }
-)
-
 
     # build dataloader
     train_loader, test_loader  = build_dataloader(cfg['dataset'])
 
+    wandb.init(
+    project=cfg['wandb']['project'],
+    notes=cfg['wandb']['notes'],
+    tags=cfg['wandb']['tags'],
+    config = cfg
+    )
 
     if args.evaluate_only:
         model = build_model(cfg['model'], 'testing')
-
+        print(model)
         logger.info('###################  Evaluation Only  ##################')
         tester = Tester(cfg=cfg['tester'],
                         model=model,
@@ -72,9 +68,14 @@ def main():
         tester.test()
         return
 
+
+
+
     # build model&&build optimizer
     if cfg['model']['type']=='centernet3d' or cfg['model']['type']=='distill':
         model = build_model(cfg['model'],'training')
+        print(model.modality)
+        print(model)
 
         optimizer = build_optimizer(cfg['optimizer'], model)
         lr_scheduler, warmup_lr_scheduler = build_lr_scheduler(cfg['lr_scheduler'], optimizer, last_epoch=-1)

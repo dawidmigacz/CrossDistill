@@ -60,6 +60,10 @@ class Trainer(object):
                  root_path):
         self.cfg = cfg
         self.model = model
+        try:
+            self.modality = model.modality
+        except AttributeError:
+            self.modality = None
         self.optimizer = optimizer
         self.train_loader = train_loader
         self.test_loader = test_loader
@@ -185,7 +189,7 @@ class Trainer(object):
 
             # train one batch
             self.optimizer.zero_grad()
-            _, outputs, _ = self.model(inputs['rgb'])
+            _, outputs, _ = self.model(inputs[self.modality])
 
             rgb_loss, rgb_stats_batch = compute_centernet3d_loss(outputs, targets)
             # depth_loss, depth_stats_batch = compute_depth_centernet3d_loss(depth_outputs, targets)
@@ -201,7 +205,7 @@ class Trainer(object):
             wandb_dict ={"epoch": self.epoch, "batch": batch_idx}
             for l in avg_loss_stats:
                 avg_loss_stats[l].update(
-                    rgb_stats_batch[l], inputs['rgb'].shape[0])
+                    rgb_stats_batch[l], inputs[self.modality].shape[0])
                 Bar.suffix = Bar.suffix + '|{} {:.4f} '.format(l, avg_loss_stats[l].avg)
                 wandb_dict[l] = avg_loss_stats[l].avg
 

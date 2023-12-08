@@ -3,7 +3,7 @@ from lib.models.centernet3d_distill import MonoDistill
 
 def build_model(cfg, flag):
     if cfg['type'] == 'centernet3d':
-        return CenterNet3D(backbone=cfg['backbone'], neck=cfg['neck'], num_class=cfg['num_class'], flag=flag, model_type=cfg['type'])
+        return CenterNet3D(backbone=cfg['backbone'], neck=cfg['neck'], num_class=cfg['num_class'], flag=flag, model_type=cfg['type'], drop_prob=cfg['drop_prob'], modality=cfg['modality'])
 
     elif cfg['type'] == 'distill':
         return MonoDistill(backbone=cfg['backbone'], neck=cfg['neck'], num_class=cfg['num_class'], flag=flag, model_type=cfg['type'])

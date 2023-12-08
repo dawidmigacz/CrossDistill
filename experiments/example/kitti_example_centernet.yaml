@@ -2,7 +2,7 @@ random_seed: 444
 
 dataset:
   type: &dataset_type 'KITTI'
-  batch_size: 8
+  batch_size: 1
   use_3d_center: True
   class_merging: False
   use_dontcare: False
@@ -15,13 +15,16 @@ dataset:
   shift: 0.0
 
 model:
-  type: 'centernet3d'  #centernet3d or distill_seperate or distill
+  type: &model_type 'centernet3d'  #centernet3d or distill_seperate or distill
   backbone: 'dla34'
   neck: 'DLAUp'
   num_class: 3
+  drop_prob: &drop_prob 0.2
+  modality: &modality 'rgb'     # 'rgb' or 'depth'
+
 
 optimizer:
-  type: 'adam'
+  type: &optimizer_type 'adam'
   lr: 0.00125
   weight_decay: 0.00001
 
@@ -31,17 +34,30 @@ lr_scheduler:
   decay_list: [90, 120]
 
 trainer:
-  max_epoch: 10
+  max_epoch: &max_epoch 140
   gpu_ids: 0,1
   save_frequency: 10 # checkpoint save interval (in epoch)
   model_save_path: 'rgb_baseline'
-  #resume_model: ''
-
-
+  resume_model: &resume_model '' # './rgb_baseline/checkpoint_epoch_30.pth'
 
 tester:
   type: *dataset_type
   mode: single   # 'single' or 'all'
-  checkpoint: './rgb_baseline/rgb_pretrain.pth'  # for 'single' mode
+  checkpoint: './rgb_baseline/db01_checkpoint_epoch_140.pth'  # for 'single' mode  # db01_
   checkpoints_dir: 'rgb_baseline'  # for 'all' model
   threshold: 0.2  # confidence filter
+  bayes_n: 1
+
+
+wandb:
+  project: 'cross-distill'
+  notes: 'centernet3d'
+  tags: ['centernet3d']
+  config:
+    dataset: *dataset_type
+    model: *model_type
+    optimizer: *optimizer_type
+    modality: *modality
+    drop_prob: *drop_prob
+    epochs: *max_epoch
+    resume_model: *resume_model

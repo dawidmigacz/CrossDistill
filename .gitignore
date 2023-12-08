@@ -46,3 +46,6 @@ lib/losses/__pycache__/feature_distill_loss.cpython-311.pyc
 lib/losses/__pycache__/focal_loss.cpython-311.pyc
 lib/losses/__pycache__/head_distill_loss.cpython-311.pyc
 lib/losses/__pycache__/uncertainty_loss.cpython-311.pyc
+experiments/example/wandb/latest-run
+experiments/example/wandb/run-20231129_102619-qwfoppty/files/config.yaml
+experiments/example/wandb/

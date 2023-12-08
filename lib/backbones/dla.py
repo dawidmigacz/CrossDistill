@@ -21,7 +21,7 @@ class DropBlock2d(nn.Module):
         self.block_size = block_size
         self.inplace = inplace
         self.eps = eps
-        self.training = training
+        self.training = True
 
     def forward(self, input):
         """
@@ -31,7 +31,7 @@ class DropBlock2d(nn.Module):
         Returns:
             Tensor: The tensor after DropBlock layer.
         """
-        return drop_block2d(input, self.p, self.block_size, self.inplace, self.eps, self.training)
+        return drop_block2d(input, self.p, self.block_size, self.inplace, self.eps, True)
 
     def __repr__(self) -> str:
         s = f"{self.__class__.__name__}(p={self.p}, block_size={self.block_size}, inplace={self.inplace})"
@@ -52,14 +52,15 @@ def conv3x3(in_planes, out_planes, stride=1):
 
 
 class BasicBlock(nn.Module):
-    def __init__(self, inplanes, planes, stride=1, dilation=1, dropblock=False):
+    def __init__(self, inplanes, planes, stride=1, dilation=1, drop_prob=0.201):
         super(BasicBlock, self).__init__()
+        self.drop_prob=drop_prob
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3,
                                stride=stride, padding=dilation,
                                bias=False, dilation=dilation)
         self.bn1 = BatchNorm(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.dropblock = DropBlock2d(p=0.1, block_size=7, training=True) if dropblock else None
+        self.dropblock = DropBlock2d(p=self.drop_prob, block_size=7, training=True) if drop_prob>0.0 else None
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
                                stride=1, padding=dilation,
                                bias=False, dilation=dilation)
@@ -196,26 +197,27 @@ class Root(nn.Module):
 class Tree(nn.Module):
     def __init__(self, levels, block, in_channels, out_channels, stride=1,
                  level_root=False, root_dim=0, root_kernel_size=1,
-                 dilation=1, root_residual=False):
+                 dilation=1, root_residual=False, drop_prob=0.21):
         super(Tree, self).__init__()
+        self.drop_prob=drop_prob
         if root_dim == 0:
             root_dim = 2 * out_channels
         if level_root:
             root_dim += in_channels
         if levels == 1:
             self.tree1 = block(in_channels, out_channels, stride,
-                               dilation=dilation, dropblock=True)
+                               dilation=dilation, drop_prob=self.drop_prob) #tu zmieniamy dropblock
             self.tree2 = block(out_channels, out_channels, 1,
-                               dilation=dilation)
+                               dilation=dilation, drop_prob=0.0)
         else:
             self.tree1 = Tree(levels - 1, block, in_channels, out_channels,
                               stride, root_dim=0,
                               root_kernel_size=root_kernel_size,
-                              dilation=dilation, root_residual=root_residual)
+                              dilation=dilation, root_residual=root_residual, drop_prob=self.drop_prob)
             self.tree2 = Tree(levels - 1, block, out_channels, out_channels,
                               root_dim=root_dim + out_channels,
                               root_kernel_size=root_kernel_size,
-                              dilation=dilation, root_residual=root_residual)
+                              dilation=dilation, root_residual=root_residual, drop_prob=self.drop_prob)
         if levels == 1:
             self.root = Root(root_dim, out_channels, root_kernel_size,
                              root_residual)
@@ -252,9 +254,10 @@ class Tree(nn.Module):
 class DLA(nn.Module):
     def __init__(self, levels, channels, num_classes=1000,
                  block=BasicBlock, residual_root=False, return_levels=False,
-                 pool_size=7, linear_root=False):
+                 pool_size=7, linear_root=False, drop_prob=0.2):
         super(DLA, self).__init__()
         self.channels = channels
+        self.drop_prob=drop_prob
         self.return_levels = return_levels
         self.num_classes = num_classes
         self.base_layer = nn.Sequential(
@@ -268,13 +271,13 @@ class DLA(nn.Module):
             channels[0], channels[1], levels[1], stride=2)
         self.level2 = Tree(levels[2], block, channels[1], channels[2], 2,
                            level_root=False,
-                           root_residual=residual_root)
+                           root_residual=residual_root, drop_prob=self.drop_prob)
         self.level3 = Tree(levels[3], block, channels[2], channels[3], 2,
-                           level_root=True, root_residual=residual_root)
+                           level_root=True, root_residual=residual_root, drop_prob=self.drop_prob)
         self.level4 = Tree(levels[4], block, channels[3], channels[4], 2,
-                           level_root=True, root_residual=residual_root)
+                           level_root=True, root_residual=residual_root, drop_prob=self.drop_prob)
         self.level5 = Tree(levels[5], block, channels[4], channels[5], 2,
-                           level_root=True, root_residual=residual_root)
+                           level_root=True, root_residual=residual_root, drop_prob=self.drop_prob)
 
         self.avgpool = nn.AvgPool2d(pool_size)
         self.fc = nn.Conv2d(channels[-1], num_classes, kernel_size=1,
@@ -348,6 +351,7 @@ class DLA(nn.Module):
 
 
 def dla34(pretrained=False, **kwargs):  # DLA-34
+    #print(kwargs)
     model = DLA([1, 1, 1, 2, 2, 1],
                 [16, 32, 64, 128, 256, 512],
                 block=BasicBlock, **kwargs)

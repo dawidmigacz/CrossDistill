@@ -13,6 +13,7 @@ class Tester(object):
     def __init__(self, cfg, model, dataloader, logger, eval=False):
         self.cfg = cfg
         self.model = model
+        self.bayes_n = self.cfg.get('bayes_n', None)
         self.dataloader = dataloader
         self.max_objs = dataloader.dataset.max_objs    # max objects per images, defined in dataset
         self.class_name = dataloader.dataset.class_name
@@ -68,23 +69,34 @@ class Tester(object):
             for key in inputs.keys():
                 inputs[key] = inputs[key].to(self.device)
             #inputs = inputs.to(self.device)
-            _, outputs, _ = self.model(inputs)
-            dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
-            dets = dets.detach().cpu().numpy()
+            
+            if self.bayes_n is None:
+                _, outputs, _ = self.model(inputs)
+                dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
+                dets = dets.detach().cpu().numpy()
 
-            # get corresponding calibs & transform tensor to numpy
-            calibs = [self.dataloader.dataset.get_calib(index)  for index in info['img_id']]
-            info = {key: val.detach().cpu().numpy() for key, val in info.items()}
-            cls_mean_size = self.dataloader.dataset.cls_mean_size
-            dets = decode_detections(dets=dets,
-                                     info=info,
-                                     calibs=calibs,
-                                     cls_mean_size=cls_mean_size,
-                                     threshold=self.cfg.get('threshold', 0.2))
-            results.update(dets)
+                # get corresponding calibs & transform tensor to numpy
+                calibs = [self.dataloader.dataset.get_calib(index)  for index in info['img_id']]
+                info = {key: val.detach().cpu().numpy() for key, val in info.items()}
+                cls_mean_size = self.dataloader.dataset.cls_mean_size
+                dets = decode_detections(dets=dets,
+                                        info=info,
+                                        calibs=calibs,
+                                        cls_mean_size=cls_mean_size,
+                                        threshold=self.cfg.get('threshold', 0.2))
+                results.update(dets)
+
+            else:
+                for i in info['img_id']:
+                    heads = {i: {h: [] for h in results[ next(iter(results)) ][0].keys()} for i in results}
+
+
+
             progress_bar.update()
 
         progress_bar.close()
+
+        self.bayes_n = self.cfg.get('bayes_n', None)
 
         # save the result for evaluation.
         self.logger.info('==> Saving ...')

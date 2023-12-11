@@ -1,6 +1,6 @@
 import os
 import tqdm
-
+import pickle
 import torch
 
 from lib.helpers.save_helper import load_checkpoint
@@ -63,6 +63,7 @@ class Tester(object):
         self.model.eval()
 
         results = {}
+        heads={}
         progress_bar = tqdm.tqdm(total=len(self.dataloader), leave=True, desc='Evaluation Progress')
         for batch_idx, (inputs, _, info) in enumerate(self.dataloader):
             # load evaluation data and move data to GPU.
@@ -86,17 +87,40 @@ class Tester(object):
                                         threshold=self.cfg.get('threshold', 0.2))
                 results.update(dets)
 
-            else:
-                for i in info['img_id']:
-                    heads = {i: {h: [] for h in results[ next(iter(results)) ][0].keys()} for i in results}
+            else:       #self_bayes not none; ASSUME BATCH = 1
+                heads[info['img_id'][0].item()] =  4 
+                heads[info['img_id'][0].item()] =  {h: [] for h in results[ info['img_id'][0].item()  ][0].keys()} 
+
+                _, outputs, _ = self.model(inputs)
+
+                for h in outputs:
+                    heads[info['img_id'][0].item()][head].append(outputs[h])
+
+
+
+
 
 
 
             progress_bar.update()
+        
+        for i in heads:
+            for head in heads[i]:
+                heads[i][head] = torch.var(torch.cat(heads[i][head]), dim=0)
+                print(i, head, heads[i][head].size())
+
+
+
+        # for i, l in results.items():
+        #     for res in l:
+        #         for h, t in res.items():
+        #             heads[i][h].append(t)
+
 
         progress_bar.close()
 
-        self.bayes_n = self.cfg.get('bayes_n', None)
+
+
 
         # save the result for evaluation.
         self.logger.info('==> Saving ...')

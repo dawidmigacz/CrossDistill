@@ -19,7 +19,7 @@ model:
   backbone: 'dla34'
   neck: 'DLAUp'
   num_class: 3
-  drop_prob: &drop_prob 0.2
+  drop_prob: &drop_prob 0.0
   modality: &modality 'rgb'     # 'rgb' or 'depth'
 
 
@@ -43,10 +43,10 @@ trainer:
 tester:
   type: *dataset_type
   mode: single   # 'single' or 'all'
-  checkpoint: './rgb_baseline/db01_checkpoint_epoch_140.pth'  # for 'single' mode  # db01_
+  checkpoint: './rgb_baseline/db00_checkpoint_epoch_140.pth'  # for 'single' mode  # db01_
   checkpoints_dir: 'rgb_baseline'  # for 'all' model
   threshold: 0.2  # confidence filter
-  bayes_n: 1
+  bayes_n: 40
 
 
 wandb:

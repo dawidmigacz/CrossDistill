@@ -37,7 +37,8 @@ class Tester(object):
                             logger=self.logger)
             self.model.to(self.device)
             self.inference()
-            self.evaluate()
+            if self.bayes_n is None:
+                self.evaluate()
 
         # test all checkpoints in the given dir
         if self.cfg['mode'] == 'all':
@@ -54,7 +55,8 @@ class Tester(object):
                                 logger=self.logger)
                 self.model.to(self.device)
                 self.inference()
-                self.evaluate()
+                if self.bayes_n is None:
+                    self.evaluate()
 
 
 
@@ -64,6 +66,7 @@ class Tester(object):
 
         results = {}
         heads={}
+        outs = {}
         progress_bar = tqdm.tqdm(total=len(self.dataloader), leave=True, desc='Evaluation Progress')
         for batch_idx, (inputs, _, info) in enumerate(self.dataloader):
             # load evaluation data and move data to GPU.
@@ -88,13 +91,21 @@ class Tester(object):
                 results.update(dets)
 
             else:       #self_bayes not none; ASSUME BATCH = 1
-                heads[info['img_id'][0].item()] =  4 
-                heads[info['img_id'][0].item()] =  {h: [] for h in results[ info['img_id'][0].item()  ][0].keys()} 
+                heads_names = ['heatmap', 'offset_2d', 'size_2d' , 'depth', 'offset_3d', 'size_3d', 'heading']
+                
+                heads[info['img_id'][0].item()] =  {h: [] for h in ['orig'] + heads_names} 
+                inp = torch.permute(inputs['rgb'], (0, 2, 3, 1))
+                inp = (inp - inp.min()) / (inp.max() - inp.min())
+                heads[info['img_id'][0].item()]['orig'] = inp
+                for i in range(self.bayes_n):
+                    _, outputs, _ = self.model(inputs)
+                    outs[info['img_id'][0].item()] = outputs['heatmap'][0]
+                    #normalise to [0,1]
+                    # outs[info['img_id'][0].item()] = (outs[info['img_id'][0].item()] - outs[info['img_id'][0].item()].min()) / (outs[info['img_id'][0].item()].max() - outs[info['img_id'][0].item()].min())
 
-                _, outputs, _ = self.model(inputs)
+                    for head in outputs:
+                        heads[info['img_id'][0].item()][head].append(outputs[head])
 
-                for h in outputs:
-                    heads[info['img_id'][0].item()][head].append(outputs[h])
 
 
 
@@ -104,27 +115,35 @@ class Tester(object):
 
             progress_bar.update()
         
-        for i in heads:
-            for head in heads[i]:
-                heads[i][head] = torch.var(torch.cat(heads[i][head]), dim=0)
-                print(i, head, heads[i][head].size())
+        filename = './unc_' + str(self.model.modality) + '_db_' + str(self.model.drop_prob) + '_n_' + str(self.bayes_n) + '.pkl'
 
 
+        if self.bayes_n is not None:
+            # with open('unc_no_var.pkl', 'wb') as handle:
+            #     pickle.dump(heads, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        # for i, l in results.items():
-        #     for res in l:
-        #         for h, t in res.items():
-        #             heads[i][h].append(t)
+            for i in heads:
+                for head in heads[i]:
+                    if head != 'orig':
+                        # print(len(heads[i][head]))
+                        heads[i][head] = torch.cat(heads[i][head])
+                        # print("bef", i, head, heads[i][head].size())
+                        heads[i][head] = torch.var(heads[i][head], dim=0)
+                        heads[i][head] = (heads[i][head] - heads[i][head].min()) / (heads[i][head].max() - heads[i][head].min())
+                        # print("aft", i, head, heads[i][head].size())
 
 
         progress_bar.close()
 
-
-
-
         # save the result for evaluation.
         self.logger.info('==> Saving ...')
-        self.save_results(results)
+        if self.bayes_n is None:
+            self.save_results(results)
+        else:
+            with open(filename, 'wb') as handle:
+                pickle.dump( {'heads': heads, 'outs': outs, 'modality': self.model.modality, 'drop_prob': self.model.drop_prob, 'bayes_n': self.bayes_n}, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+        self.logger.info('==> Results Saved !')
 
 
 

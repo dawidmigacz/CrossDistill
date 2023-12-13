@@ -6,7 +6,8 @@ import torch
 from lib.helpers.save_helper import load_checkpoint
 from lib.helpers.decode_helper import extract_dets_from_outputs
 from lib.helpers.decode_helper import decode_detections
-
+#import plt
+import matplotlib.pyplot as plt
 
 
 class Tester(object):
@@ -97,15 +98,33 @@ class Tester(object):
                 inp = torch.permute(inputs['rgb'], (0, 2, 3, 1))
                 inp = (inp - inp.min()) / (inp.max() - inp.min())
                 heads[info['img_id'][0].item()]['orig'] = inp
+                outputs = 0
                 for i in range(self.bayes_n):
                     _, outputs, _ = self.model(inputs)
-                    outs[info['img_id'][0].item()] = outputs['heatmap'][0]
-                    #normalise to [0,1]
-                    # outs[info['img_id'][0].item()] = (outs[info['img_id'][0].item()] - outs[info['img_id'][0].item()].min()) / (outs[info['img_id'][0].item()].max() - outs[info['img_id'][0].item()].min())
-
+                    # if i > 0:
+                    #     heatmap1 = outputs['heatmap'][0][0].detach().cpu().numpy()
+                    #     plt.imshow(heatmap-heatmap1, cmap='hot', interpolation='nearest')
+                    #     plt.show()
+                    # heatmap = outputs['heatmap'][0][0].detach().cpu().numpy()
+                    
                     for head in outputs:
                         heads[info['img_id'][0].item()][head].append(outputs[head])
 
+                outs[info['img_id'][0].item()] = outputs['heatmap'][0].clone().detach()
+                dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
+                dets = dets.detach().cpu().numpy()
+
+                # get corresponding calibs & transform tensor to numpy
+                calibs = [self.dataloader.dataset.get_calib(index)  for index in info['img_id']]
+                info = {key: val.detach().cpu().numpy() for key, val in info.items()}
+                cls_mean_size = self.dataloader.dataset.cls_mean_size
+                dets = decode_detections(dets=dets,
+                                        info=info,
+                                        calibs=calibs,
+                                        cls_mean_size=cls_mean_size,
+                                        threshold=self.cfg.get('threshold', 0.2))
+                results.update(dets)
+                # print(results[ info['img_id'][0].item() ])
 
 
 
@@ -125,12 +144,10 @@ class Tester(object):
             for i in heads:
                 for head in heads[i]:
                     if head != 'orig':
-                        # print(len(heads[i][head]))
                         heads[i][head] = torch.cat(heads[i][head])
-                        # print("bef", i, head, heads[i][head].size())
                         heads[i][head] = torch.var(heads[i][head], dim=0)
+                        print(head, heads[i][head].max() , heads[i][head].min())
                         heads[i][head] = (heads[i][head] - heads[i][head].min()) / (heads[i][head].max() - heads[i][head].min())
-                        # print("aft", i, head, heads[i][head].size())
 
 
         progress_bar.close()
@@ -141,7 +158,7 @@ class Tester(object):
             self.save_results(results)
         else:
             with open(filename, 'wb') as handle:
-                pickle.dump( {'heads': heads, 'outs': outs, 'modality': self.model.modality, 'drop_prob': self.model.drop_prob, 'bayes_n': self.bayes_n}, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump( {'heads': heads, 'outs': outs, 'modality': self.model.modality, 'drop_prob': self.model.drop_prob, 'bayes_n': self.bayes_n, 'results': results}, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
         self.logger.info('==> Results Saved !')
 

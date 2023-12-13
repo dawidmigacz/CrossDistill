@@ -49,3 +49,6 @@ lib/losses/__pycache__/uncertainty_loss.cpython-311.pyc
 experiments/example/wandb/latest-run
 experiments/example/wandb/run-20231129_102619-qwfoppty/files/config.yaml
 experiments/example/wandb/
+experiments/example/unc_no_var.pkl
+*.pkl
+*.pyc

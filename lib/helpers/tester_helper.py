@@ -8,6 +8,7 @@ from lib.helpers.decode_helper import extract_dets_from_outputs
 from lib.helpers.decode_helper import decode_detections
 #import plt
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Tester(object):
@@ -101,18 +102,15 @@ class Tester(object):
                 outputs = 0
                 for i in range(self.bayes_n):
                     _, outputs, _ = self.model(inputs)
-                    # if i > 0:
-                    #     heatmap1 = outputs['heatmap'][0][0].detach().cpu().numpy()
-                    #     plt.imshow(heatmap-heatmap1, cmap='hot', interpolation='nearest')
-                    #     plt.show()
-                    # heatmap = outputs['heatmap'][0][0].detach().cpu().numpy()
-                    
+
+
                     for head in outputs:
-                        heads[info['img_id'][0].item()][head].append(outputs[head])
+                        heads[info['img_id'][0].item()][head].append(outputs[head].clone().detach())
 
                 outs[info['img_id'][0].item()] = outputs['heatmap'][0].clone().detach()
                 dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
                 dets = dets.detach().cpu().numpy()
+
 
                 # get corresponding calibs & transform tensor to numpy
                 calibs = [self.dataloader.dataset.get_calib(index)  for index in info['img_id']]
@@ -128,15 +126,24 @@ class Tester(object):
 
 
 
-
+                if info['img_id'][0].item() == 1:
+                    print("^^^^^^^^^^^", heads[1]['heatmap'][39]-heads[1]['heatmap'][38])
 
 
 
             progress_bar.update()
         
+
+        # for j in range(1,40):
+        #     print(59,j, heads[59][head][j]-heads[59][head][j-1])   
+
         filename = './unc_' + str(self.model.modality) + '_db_' + str(self.model.drop_prob) + '_n_' + str(self.bayes_n) + '.pkl'
 
-
+        print(39, heads[1]['heatmap'][39])
+        print(38, heads[1]['heatmap'][38])
+        print(37, heads[1]['heatmap'][37])
+        print("////////////", heads[1]['heatmap'][39]-heads[1]['heatmap'][38])
+        raise Exception('stop')
         if self.bayes_n is not None:
             # with open('unc_no_var.pkl', 'wb') as handle:
             #     pickle.dump(heads, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -144,8 +151,17 @@ class Tester(object):
             for i in heads:
                 for head in heads[i]:
                     if head != 'orig':
+                        # if head == 'heatmap':
+                        #     for j in range(1,40):
+                        #         print(i ,j, heads[i][head][j]-heads[i][head][j-1])
+                        # raise Exception('stop')
                         heads[i][head] = torch.cat(heads[i][head])
+                        # print(heads[i][head].size())
+                        
+                        # np.savetxt("head" + str(i)+'v.txt', heads[i][head][0][0].detach().cpu().numpy())
                         heads[i][head] = torch.var(heads[i][head], dim=0)
+                        # print(heads[i][head].size())
+                        # np.savetxt(head + str(i)+'v.txt', heads[i][head].detach().cpu().numpy())
                         print(head, heads[i][head].max() , heads[i][head].min())
                         heads[i][head] = (heads[i][head] - heads[i][head].min()) / (heads[i][head].max() - heads[i][head].min())
 
@@ -159,7 +175,7 @@ class Tester(object):
         else:
             with open(filename, 'wb') as handle:
                 pickle.dump( {'heads': heads, 'outs': outs, 'modality': self.model.modality, 'drop_prob': self.model.drop_prob, 'bayes_n': self.bayes_n, 'results': results}, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    
+                print(filename, ' saved')
         self.logger.info('==> Results Saved !')
 
 

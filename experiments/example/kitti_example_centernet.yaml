@@ -1,14 +1,14 @@
-random_seed: 444
+random_seed: 444 
 
 dataset:
-  type: &dataset_type 'KITTI'
-  batch_size: 1
-  use_3d_center: True
-  class_merging: False
-  use_dontcare: False
+  type: &dataset_type 'KITTI' 
+  batch_size: 24 
+  use_3d_center: True 
+  class_merging: False 
+  use_dontcare: False 
   bbox2d_type: 'anno'   # 'proj' or 'anno'
   meanshape: False      # use predefined anchor or not
-  writelist: ['Car']
+  writelist: ['Car']   # ['Car', 'Pedestrian', 'Cyclist']
   random_flip: 0.5
   random_crop: 0.5
   scale: 0.4
@@ -16,37 +16,38 @@ dataset:
 
 model:
   type: &model_type 'centernet3d'  #centernet3d or distill_seperate or distill
-  backbone: 'dla34'
-  neck: 'DLAUp'
-  num_class: 3
-  drop_prob: &drop_prob 0.0
+  backbone: 'dla34' 
+  neck: 'DLAUp' 
+  num_class: 3 
+  drop_prob: &drop_prob 0.15 # dropout rate
   modality: &modality 'rgb'     # 'rgb' or 'depth'
 
 
 optimizer:
-  type: &optimizer_type 'adam'
-  lr: 0.00125
-  weight_decay: 0.00001
+  type: &optimizer_type 'adam' 
+  lr: 0.00125 
+  weight_decay: 0.00001 
 
 lr_scheduler:
   warmup: True  # 5 epoches, cosine warmup, init_lir=0.00001 in default
-  decay_rate: 0.1
-  decay_list: [90, 120]
+  decay_rate: 0.1 
+  decay_list: [200, 280] # [90, 120] 
 
 trainer:
-  max_epoch: &max_epoch 140
-  gpu_ids: 0,1
+  max_epoch: &max_epoch 300 
+  gpu_ids: 0,1 
   save_frequency: 10 # checkpoint save interval (in epoch)
-  model_save_path: 'rgb_baseline'
-  resume_model: &resume_model '' # './rgb_baseline/checkpoint_epoch_30.pth'
+  model_save_path: 'models' # checkpoint save path
+  resume_model: &resume_model './models/checkpoint_epoch_160.pth'
 
 tester:
-  type: *dataset_type
-  mode: single   # 'single' or 'all'
-  checkpoint: './rgb_baseline/db00_checkpoint_epoch_140.pth'  # for 'single' mode  # db01_
-  checkpoints_dir: 'rgb_baseline'  # for 'all' model
+  type: *dataset_type # 'KITTI'
+  mode: all   # 'single' or 'all'
+  checkpoint: './models/checkpoint_epoch_140.pth'  # for 'single' mode  # db01_
+  checkpoints_dir: 'models'  # for 'all' model
   threshold: 0.2  # confidence filter
-  bayes_n: 40
+  # bayes_n: 40
+
 
 
 wandb:

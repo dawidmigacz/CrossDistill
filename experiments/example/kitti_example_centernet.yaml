@@ -19,9 +19,8 @@ model:
   backbone: 'dla34'
   neck: 'DLAUp'
   num_class: 3
-  drop_prob: &drop_prob 0.0
+  drop_prob: &drop_prob 0.15
   modality: &modality 'rgb'     # 'rgb' or 'depth'
-
 
 optimizer:
   type: &optimizer_type 'adam'
@@ -31,20 +30,20 @@ optimizer:
 lr_scheduler:
   warmup: True  # 5 epoches, cosine warmup, init_lir=0.00001 in default
   decay_rate: 0.1
-  decay_list: [90, 120]
+  decay_list: [90, 120] #[200, 280]
 
 trainer:
-  max_epoch: &max_epoch 140
+  max_epoch: &max_epoch 140 #300
   gpu_ids: 0,1
   save_frequency: 10 # checkpoint save interval (in epoch)
-  model_save_path: 'rgb_baseline'
-  resume_model: &resume_model '' # './rgb_baseline/checkpoint_epoch_30.pth'
+  model_save_path: 'models'
+  resume_model: &resume_model '' # './models/checkpoint_epoch_30.pth'
 
 tester:
   type: *dataset_type
   mode: single   # 'single' or 'all'
-  checkpoint: './rgb_baseline/db00_checkpoint_epoch_140.pth'  # for 'single' mode  # db01_
-  checkpoints_dir: 'rgb_baseline'  # for 'all' model
+  checkpoint: './models/rgb_db015_checkpoint_epoch_300.pth'  # for 'single' mode  # db01_
+  checkpoints_dir: 'models'  # for 'all' model
   threshold: 0.2  # confidence filter
   bayes_n: 40
 

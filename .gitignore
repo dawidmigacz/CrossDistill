@@ -58,3 +58,4 @@ experiments/example/models
 
 experiments/example/kitti_example_centernet.yaml
 experiments/example/train_d.sh
+experiments/example/train_d.sh

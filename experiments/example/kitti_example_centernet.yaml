@@ -45,7 +45,7 @@ tester:
   checkpoint: './models/depth_db015_checkpoint_epoch_300.pth'  # for 'single' mode  # db01_
   checkpoints_dir: 'models'  # for 'all' model
   threshold: 0.2  # confidence filter
-  bayes_n: 100
+  # bayes_n: 50
 
 
 

@@ -4,7 +4,7 @@ import torch.nn as nn
 from lib.datasets.utils import class2angle
 
 
-def decode_detections(dets, info, calibs, cls_mean_size, threshold):
+def decode_detections(dets, info, calibs, cls_mean_size, threshold, d3box=False):
     '''
     NOTE: THIS IS A NUMPY FUNCTION
     input: dets, numpy array, shape in [batch x max_dets x dim]
@@ -48,21 +48,24 @@ def decode_detections(dets, info, calibs, cls_mean_size, threshold):
 
             score = score * dets[i, j, -1]
 
-            ##### generate 2d bbox using 3d bbox
-            # h, w, l = dimensions
-            # x_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
-            # y_corners = [0, 0, 0, 0, -h, -h, -h, -h]
-            # z_corners = [w / 2, -w / 2, -w / 2, w / 2, w / 2, -w / 2, -w / 2, w / 2]
-            # R = np.array([[np.cos(ry), 0, np.sin(ry)],
-            #               [0, 1, 0],
-            #               [-np.sin(ry), 0, np.cos(ry)]])
-            # corners3d = np.vstack([x_corners, y_corners, z_corners])  # (3, 8)
-            # corners3d = np.dot(R, corners3d).T
-            # corners3d = corners3d + locations
-            # bbox, _ = calibs[i].corners3d_to_img_boxes(corners3d.reshape(1, 8, 3))
-            # bbox = bbox.reshape(-1).tolist()
-
-            preds.append([cls_id, alpha] + bbox + dimensions.tolist() + locations.tolist() + [ry, score])
+            #### generate 2d bbox using 3d bbox
+            h, w, l = dimensions
+            x_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
+            y_corners = [0, 0, 0, 0, -h, -h, -h, -h]
+            z_corners = [w / 2, -w / 2, -w / 2, w / 2, w / 2, -w / 2, -w / 2, w / 2]
+            R = np.array([[np.cos(ry), 0, np.sin(ry)],
+                          [0, 1, 0],
+                          [-np.sin(ry), 0, np.cos(ry)]])
+            corners3d = np.vstack([x_corners, y_corners, z_corners])  # (3, 8)
+            corners3d = np.dot(R, corners3d).T
+            corners3d = corners3d + locations
+            bbox, vvv = calibs[i].corners3d_to_img_boxes(corners3d.reshape(1, 8, 3))
+            bbox = bbox.reshape(-1).tolist()
+            if d3box:
+                preds.append([cls_id, alpha] + bbox + dimensions.tolist() + locations.tolist() + [ry, score] + [vvv[0]])
+            else:
+                preds.append([cls_id, alpha] + bbox + dimensions.tolist() + locations.tolist() + [ry, score])
+            
         results[info['img_id'][i]] = preds
     return results
 

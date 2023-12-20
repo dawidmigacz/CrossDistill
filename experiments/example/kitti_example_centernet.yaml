@@ -22,7 +22,6 @@ model:
   drop_prob: &drop_prob 0.15 # dropout rate
   modality: &modality 'depth'     # 'rgb' or 'depth'
 
-
 optimizer:
   type: &optimizer_type 'adam' 
   lr: 0.00125 
@@ -37,8 +36,8 @@ trainer:
   max_epoch: &max_epoch 300 
   gpu_ids: 0,1 
   save_frequency: 10 # checkpoint save interval (in epoch)
-  model_save_path: 'models' # checkpoint save path
-  resume_model: &resume_model ''  #'./models/checkpoint_epoch_160.pth'
+  model_save_path: 'models'
+  resume_model: &resume_model '' # './rgb_baseline/checkpoint_epoch_30.pth'
 
 tester:
   type: *dataset_type # 'KITTI'

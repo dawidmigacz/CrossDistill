@@ -52,5 +52,9 @@ experiments/example/wandb/
 experiments/example/unc_no_var.pkl
 *.pkl
 *.pyc
+experiments/example/models
+*.symlink
+experiments/example/models
+
 experiments/example/kitti_example_centernet.yaml
 experiments/example/train_d.sh

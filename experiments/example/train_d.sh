@@ -13,4 +13,4 @@
 CONFIG=$1
 
 module load CUDA/12.0.0
-python ../../tools/train_val.py --config kitti_example_centernet.yaml -e
+python ../../tools/train_val.py --config kitti_example_centernet.yaml 

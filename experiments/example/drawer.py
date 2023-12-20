@@ -44,14 +44,14 @@ for img_id, img_data in data['heads'].items():
         boxes = data['results'][img_id]  # Get the bounding boxes for the image
 
         parameters_to_channels = {
-            'outs': 0, # 0-2
-            # 'heatmap': 1, # 0-2
-            # 'offset_2d': 0, # 0-1
-            # 'size_2d': 0, # 0-1
-            'offset_3d': 0, # 0-1
-            'size_3d': 2, # 0-2
-            # 'depth': 1, # 0-1
-            # 'heading': 0, # 0-23
+            'outs': 0, # 0-2 
+            # 'heatmap': 1, # 0-2 
+            # 'offset_2d': 0, # 0-1 
+            # 'size_2d': 0, # 0-1 
+            'offset_3d': 0, # 0-1 
+            'size_3d': 2, # 0-2 
+            # 'depth': 1, # 0-1 
+            # 'heading': 0, # 0-23 
             }
 
 

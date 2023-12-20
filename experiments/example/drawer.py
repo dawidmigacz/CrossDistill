@@ -43,16 +43,16 @@ for img_id, img_data in data['heads'].items():
         img = (img * 255).astype(np.uint8) 
         boxes = data['results'][img_id]  # Get the bounding boxes for the image
 
-        parameters_to_channels = {
-            'outs': 0, # 0-2 
-            # 'heatmap': 1, # 0-2 
-            # 'offset_2d': 0, # 0-1 
-            # 'size_2d': 0, # 0-1 
-            'offset_3d': 0, # 0-1 
-            'size_3d': 2, # 0-2 
-            # 'depth': 1, # 0-1 
-            # 'heading': 0, # 0-23 
-            }
+        parameters_to_channels = [ #-1 means sum over all channels
+            ('outs', 0),  # 0-2 
+            # ('heatmap', 1),  # 0-2 
+            ('offset_2d', -1),  # 0-1 
+            ('size_2d', -1),  # 0-1 
+            ('offset_3d', -1),  # 0-1 
+            ('size_3d', -1),  # 0-2 
+            ('depth', -1),  # 0-1 
+            ('heading', -1),  # 0-23 
+        ]
 
 
         n_drawings = len(parameters_to_channels) + 1
@@ -61,7 +61,6 @@ for img_id, img_data in data['heads'].items():
         ax = draw_subplot(len(data_dicts), n_drawings, 1+i*n_drawings)
         for box in boxes:
             # get the coordinates of the projection of 3d box - they are the last 16 elements of the box
-            print("box", box)
             corners3d = np.array(box[-1]).reshape(8, 2)  # Reshape to 8 corners with 2 coordinates each
 
             # draw the corners on top of the image
@@ -82,11 +81,14 @@ for img_id, img_data in data['heads'].items():
         plt.imshow(img)
 
         # Loop over the parameters and display their uncertainty maps
-        for j, (parameter, channel) in enumerate(parameters_to_channels.items()):
+        for j, (parameter, channel) in enumerate(parameters_to_channels):
             if parameter == 'outs':
                 parameter_data = data['outs'][img_id][channel].cpu()
             else:
-                parameter_data = data['heads'][img_id][parameter][channel]
+                if channel == -1:
+                    parameter_data = data['heads'][img_id][parameter].sum(dim=0).cpu()
+                else:
+                    parameter_data = data['heads'][img_id][parameter][channel].cpu()
             # id = idx(len(data_dicts), n_drawings, j+2+i*n_drawings)
             # plt.subplot(len(data_dicts), n_drawings, id)
             draw_subplot(len(data_dicts), n_drawings, j+2+i*n_drawings)

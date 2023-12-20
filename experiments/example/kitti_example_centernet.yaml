@@ -2,7 +2,7 @@ random_seed: 444
 
 dataset:
   type: &dataset_type 'KITTI' 
-  batch_size: 24 
+  batch_size: 1
   use_3d_center: True 
   class_merging: False 
   use_dontcare: False 
@@ -20,7 +20,7 @@ model:
   neck: 'DLAUp' 
   num_class: 3 
   drop_prob: &drop_prob 0.15 # dropout rate
-  modality: &modality 'rgb'     # 'rgb' or 'depth'
+  modality: &modality 'depth'     # 'rgb' or 'depth'
 
 optimizer:
   type: &optimizer_type 'adam' 
@@ -36,16 +36,16 @@ trainer:
   max_epoch: &max_epoch 140
   gpu_ids: 0,1
   save_frequency: 10 # checkpoint save interval (in epoch)
-  model_save_path: 'rgb_baseline'
+  model_save_path: 'models'
   resume_model: &resume_model '' # './rgb_baseline/checkpoint_epoch_30.pth'
 
 tester:
   type: *dataset_type
   mode: single   # 'single' or 'all'
-  checkpoint: './rgb_baseline/db00_checkpoint_epoch_140.pth'  # for 'single' mode  # db01_
-  checkpoints_dir: 'rgb_baseline'  # for 'all' model
+  checkpoint: './models/depth_db015_checkpoint_epoch_300.pth'  # for 'single' mode  # db01_
+  checkpoints_dir: 'models'  # for 'all' model
   threshold: 0.2  # confidence filter
-  # bayes_n: 40
+  bayes_n: 100
 
 
 

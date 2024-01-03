@@ -22,11 +22,13 @@ from lib.helpers.trainer_helper import Trainer
 from lib.helpers.tester_helper import Tester
 from lib.helpers.utils_helper import create_logger
 from lib.helpers.utils_helper import set_random_seed
+from lib.helpers.uncertainty_helper import Uncertainter
 
 
 parser = argparse.ArgumentParser(description='Monocular 3D Object Detection')
 parser.add_argument('--config', dest='config', help='settings of detection in yaml format')
 parser.add_argument('-e', '--evaluate_only', action='store_true', default=False, help='evaluation only')
+parser.add_argument('-u', '--uncertainty_only', action='store_true', default=False, help='uncertainty only')
 
 args = parser.parse_args()
 
@@ -57,7 +59,22 @@ def main():
     config = cfg
     )
 
+    if args.uncertainty_only:
+        if cfg['tester'].get('bayes_n', None) is None:
+            raise ValueError('bayes_n should be set in tester when uncertainty_only is True')
+        model = build_model(cfg['model'], 'testing')
+        print(model)
+        logger.info('###################  Uncertainty Only  ##################')
+        uncertainter = Uncertainter(cfg=cfg['tester'],
+                        model=model,
+                        dataloader=test_loader,
+                        logger=logger)
+        uncertainter.uncertainty()
+        return
+
     if args.evaluate_only:
+        # if cfg['tester'].get('bayes_n', None) is not None:
+        #     raise ValueError('bayes_n should not be set in tester when evaluate_only is True')
         model = build_model(cfg['model'], 'testing')
         print(model)
         logger.info('###################  Evaluation Only  ##################')

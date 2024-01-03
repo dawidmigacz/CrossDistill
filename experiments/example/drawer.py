@@ -45,13 +45,13 @@ for img_id, img_data in data['heads'].items():
 
         parameters_to_channels = [ #-1 means sum over all channels
             ('outs', 0),  # 0-2 
-            # ('heatmap', 1),  # 0-2 
+            ('heatmap', 1),  # 0-2 
             ('offset_2d', -1),  # 0-1 
             ('size_2d', -1),  # 0-1 
             ('offset_3d', -1),  # 0-1 
             ('size_3d', -1),  # 0-2 
-            ('depth', -1),  # 0-1 
-            ('heading', -1),  # 0-23 
+            # ('depth', -1),  # 0-1 
+            # ('heading', -1),  # 0-23 
         ]
 
 

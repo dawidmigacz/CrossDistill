@@ -161,7 +161,7 @@ class Trainer(object):
             self.warmup_lr_scheduler.step()
         else:
             self.lr_scheduler.step()
-
+    
     def save_model(self):
         if (self.epoch % self.cfg['save_frequency']) == 0:
             os.makedirs(self.cfg['model_save_path'], exist_ok=True)

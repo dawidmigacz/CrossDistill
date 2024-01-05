@@ -16,7 +16,7 @@ dataset:
   uncertainty: True
 
 model:
-  type: &model_type 'centernet3d'  #centernet3d or distill_separate or distill
+  type: &model_type 'centernet3d'  #centernet3d or distill_seperate or distill
   backbone: 'dla34' 
   neck: 'DLAUp' 
   num_class: 3 
@@ -29,7 +29,7 @@ optimizer:
   weight_decay: 0.00001 
 
 lr_scheduler:
-  warmup: True  # 5 epochs, cosine warmup, init_lir=0.00001 in default
+  warmup: True  # 5 epoches, cosine warmup, init_lir=0.00001 in default
   decay_rate: 0.1 
   decay_list: [200, 280] # [90, 120] 
 
@@ -43,7 +43,7 @@ trainer:
 tester:
   type: *dataset_type # 'KITTI'
   mode: single   # 'single' or 'all'
-  checkpoint: './models/depth_db015_checkpoint_epoch_300.pth'  # for 'single' mode  # db01_
+  checkpoint: './models/depth_pretrain.pth'  # for 'single' mode  # db01_
   checkpoints_dir: 'models'  # for 'all' model
   threshold: 0.2  # confidence filter
   bayes_n: 40

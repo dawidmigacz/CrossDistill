@@ -23,3 +23,15 @@ experiments/example/models
 experiments/example/models
 experiments/example/kitti_example_centernet.yaml
 experiments/example/train_d.sh
+lib — kopia/*
+experiments — kopia/*
+*.pyc
+lib/helpers/__pycache__/decode_helper.cpython-311.pyc
+lib/helpers/__pycache__/model_helper.cpython-311.pyc
+lib/helpers/__pycache__/tester_helper.cpython-311.pyc
+lib/helpers/__pycache__/trainer_helper.cpython-311.pyc
+lib/datasets/kitti/kitti_eval_python/__pycache__/eval.cpython-311.pyc
+lib/helpers/__pycache__/dataloader_helper.cpython-311.pyc
+lib/helpers/__pycache__/model_helper.cpython-311.pyc
+lib/helpers/__pycache__/decode_helper.cpython-311.pyc
+__pycache__

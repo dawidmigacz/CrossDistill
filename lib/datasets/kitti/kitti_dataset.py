@@ -36,7 +36,7 @@ class KITTI_Dataset(data.Dataset):
         self.meanshape = cfg.get('meanshape', False)
         self.class_merging = cfg.get('class_merging', False)
         self.use_dontcare = cfg.get('use_dontcare', False)
-        # self.uncertainty = cfg.get('uncertainty', False)
+        self.uncertainty = cfg.get('uncertainty', False)
 
         if self.class_merging:  # False
             self.writelist.extend(['Van', 'Truck'])
@@ -54,9 +54,9 @@ class KITTI_Dataset(data.Dataset):
         self.depth_dir = os.path.join(self.data_dir, 'depth_2')
         self.calib_dir = os.path.join(self.data_dir, 'calib')
         self.label_dir = os.path.join(self.data_dir, 'label_2')
-        # if self.uncertainty:
-        #     self.uncertainty_depth_dir = os.path.join(self.data_dir, 'unc_depth')
-        #     self.uncertainty_rgb_dir = os.path.join(self.data_dir, 'unc_rgb')
+        if self.uncertainty:
+            self.uncertainty_depth_dir = os.path.join(self.data_dir, 'unc_depth')
+            self.uncertainty_rgb_dir = os.path.join(self.data_dir, 'unc_rgb')
 
         # data augmentation configuration
         self.data_augmentation = True if split in ['train', 'trainval'] else False
@@ -111,19 +111,19 @@ class KITTI_Dataset(data.Dataset):
         assert os.path.exists(calib_file)
         return Calibration(calib_file)
     
-    # def get_uncertainty_depth(self, idx):
-    #     unc_depth_file = os.path.join(self.uncertainty_depth_dir, '%06d.pkl' % idx)
-    #     assert os.path.exists(unc_depth_file)
-    #     with open(unc_depth_file, 'rb') as f:
-    #         data = pickle.load(f)
-    #     return data
+    def get_uncertainty_depth(self, idx):
+        unc_depth_file = os.path.join(self.uncertainty_depth_dir, '%06d.pkl' % idx)
+        assert os.path.exists(unc_depth_file)
+        with open(unc_depth_file, 'rb') as f:
+            data = pickle.load(f)
+        return data
 
-    # def get_uncertainty_rgb(self, idx):
-    #     unc_rgb_file = os.path.join(self.uncertainty_rgb_dir, '%06d.pkl' % idx)
-    #     assert os.path.exists(unc_rgb_file)
-    #     with open(unc_rgb_file, 'rb') as f:
-    #         data = pickle.load(f)
-    #     return data
+    def get_uncertainty_rgb(self, idx):
+        unc_rgb_file = os.path.join(self.uncertainty_rgb_dir, '%06d.pkl' % idx)
+        assert os.path.exists(unc_rgb_file)
+        with open(unc_rgb_file, 'rb') as f:
+            data = pickle.load(f)
+        return data
 
     def eval(self, results_dir, logger):
         logger.info("==> Loading detections and GTs...")
@@ -154,9 +154,9 @@ class KITTI_Dataset(data.Dataset):
         if self.split != 'test':
             objects = self.get_label(index)
 
-        # if self.uncertainty:
-        #     depth_unc = self.get_uncertainty_depth(index)
-        #     rgb_unc = self.get_uncertainty_rgb(index)
+        if self.uncertainty:
+            depth_unc = self.get_uncertainty_depth(index)
+            rgb_unc = self.get_uncertainty_rgb(index)
 
         calib = self.get_calib(index)
         img_size = np.array(img.size)
@@ -355,9 +355,9 @@ class KITTI_Dataset(data.Dataset):
         info = {'img_id': index,
                 'img_size': img_size,
                 'bbox_downsample_ratio': img_size / features_size}
-        # if self.uncertainty:
-        #     targets['unc_depth'] = depth_unc
-        #     targets['unc_rgb'] = rgb_unc
+        if self.uncertainty:
+            targets['unc_depth'] = depth_unc
+            targets['unc_rgb'] = rgb_unc
         return inputs, targets, info
 
 

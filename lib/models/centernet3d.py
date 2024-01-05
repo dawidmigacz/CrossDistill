@@ -61,19 +61,9 @@ class CenterNet3D(nn.Module):
     def forward(self, input):
         if self.model_type == 'centernet3d':
             try:
-                input = input[self.modality] # turn off when training
-                # print(f'input = input[{self.modality}]')
+                input = input[self.modality] 
             except:
                 pass
-                # print('The above line failed.')
-            #print(input.size())
-            
-
-        # print("dddd", self.model_type)
-
-        # if self.model_type == 'distill':
-        #     input = input[self.modality]
-
 
         feat_backbone = self.backbone(input)
         feat = self.neck(feat_backbone[self.first_level:])  # first_level = 2

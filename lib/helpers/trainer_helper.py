@@ -96,6 +96,32 @@ class Trainer(object):
                                              logger=self.logger)
                 self.lr_scheduler.last_epoch = self.epoch - 1
 
+        if self.model_type == 'distill_separate':
+            if cfg.get('pretrain_model'):
+                if os.path.exists(cfg['pretrain_model']['rgb']):
+                    load_checkpoint(model=self.model.centernet_rgb,
+                                    optimizer=None,
+                                    filename=cfg['pretrain_model']['rgb'],
+                                    map_location=self.device,
+                                    logger=self.logger)
+                else:
+                    self.logger.info("no rgb pretrained model")
+                    assert os.path.exists(cfg['pretrain_model']['rgb'])
+
+                if os.path.exists(cfg['pretrain_model']['depth']):
+                    load_checkpoint(model=self.model.centernet_depth,
+                                    optimizer=None,
+                                    filename=cfg['pretrain_model']['depth'],
+                                    map_location=self.device,
+                                    logger=self.logger)
+                else:
+                    self.logger.info("no depth pretrained model")
+                    assert os.path.exists(cfg['pretrain_model']['depth'])
+
+
+
+
+
         if self.model_type == 'distill':
             if cfg.get('pretrain_model'):
                 if os.path.exists(cfg['pretrain_model']['rgb']):

@@ -47,7 +47,6 @@ else:
 log_file = 'train.log.%s' % datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 logger = create_logger(log_path, log_file)
 
-
 model = build_model(cfg['model'], flag='testing')
 
 if os.path.exists(cfg['trainer']['pretrain_model']['rgb']):

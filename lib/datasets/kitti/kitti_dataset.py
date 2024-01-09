@@ -138,6 +138,7 @@ class KITTI_Dataset(data.Dataset):
         for category in self.writelist:
             results_str, results_dict = get_official_eval_result(gt_annos, dt_annos, test_id[category])
             logger.info(results_str)
+        return results_dict
 
 
     def __len__(self):

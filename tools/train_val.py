@@ -24,6 +24,8 @@ from lib.helpers.utils_helper import create_logger
 from lib.helpers.utils_helper import set_random_seed
 from lib.helpers.uncertainty_helper import Uncertainter
 
+import numpy as np
+import torch
 
 parser = argparse.ArgumentParser(description='Monocular 3D Object Detection')
 parser.add_argument('--config', dest='config', help='settings of detection in yaml format')
@@ -35,10 +37,27 @@ args = parser.parse_args()
 
 
 def main():
+    print('__Python VERSION:', sys.version)
+    print('__pyTorch VERSION:', torch.__version__)
+    print('__CUDA VERSION')
+    from subprocess import call
+    print('__CUDNN VERSION:', torch.backends.cudnn.version())
+    print('__Number CUDA Devices:', torch.cuda.device_count())
+    print("OS: ", sys.platform)
+    print("Python: ", sys.version)
+    print("PyTorch: ", torch.__version__)
+    print("Numpy: ", np.__version__)
+    np.random.seed(42)
+    torch.manual_seed(42)
+    os.environ["PYTHONHASHSEED"] = "42"
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.set_num_threads(1)
+
     assert (os.path.exists(args.config))
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     print(cfg)
-    set_random_seed(cfg.get('random_seed', 444))
+
 
     log_path = ROOT_DIR + "/experiments/example/logs/"
     if os.path.exists(log_path):
@@ -63,7 +82,7 @@ def main():
         if cfg['tester'].get('bayes_n', None) is None:
             raise ValueError('bayes_n should be set in tester when uncertainty_only is True')
         model = build_model(cfg['model'], 'testing')
-        print(model)
+        # print(model)
         logger.info('###################  Uncertainty Only  ##################')
         uncertainter = Uncertainter(cfg=cfg['tester'],
                         model=model,
@@ -76,7 +95,7 @@ def main():
         # if cfg['tester'].get('bayes_n', None) is not None:
         #     raise ValueError('bayes_n should not be set in tester when evaluate_only is True')
         model = build_model(cfg['model'], 'testing')
-        print(model)
+        # print(model)
         logger.info('###################  Evaluation Only  ##################')
         tester = Tester(cfg=cfg['tester'],
                         model=model,

@@ -47,6 +47,7 @@ tester:
   checkpoints_dir: 'models'  # for 'all' model
   threshold: 0.2  # confidence filter
   bayes_n: 40
+  model_type: *model_type
 
 
 

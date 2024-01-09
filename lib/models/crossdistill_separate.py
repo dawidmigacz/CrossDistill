@@ -43,7 +43,7 @@ class CrossDistillSeparate(nn.Module):
             rgb = input['rgb']
             depth = input['depth']
             
-            
+            raise NotImplementedError("CrossDistillSeparate forward not implemented")
             # coin toss to choose rgb or depth
             if np.random.rand() > 5:
                 # print("rgb")

@@ -137,6 +137,7 @@ def main():
 
     logger.info('###################  Evaluation  ##################' )
     test_model_list = build_model(cfg['model'],'testing')
+    cfg['tester']['uncertainty_threshold'] = np.random.uniform(-1.0, 1.0)
     tester = Tester(cfg=cfg['tester'],
                     model=test_model_list,
                     dataloader=test_loader,

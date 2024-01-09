@@ -35,3 +35,4 @@ lib/helpers/__pycache__/dataloader_helper.cpython-311.pyc
 lib/helpers/__pycache__/model_helper.cpython-311.pyc
 lib/helpers/__pycache__/decode_helper.cpython-311.pyc
 __pycache__
+experiments/example/wykres.txt

@@ -49,6 +49,7 @@ tester:
   threshold: 0.2  # confidence filter
   bayes_n: 40
   model_type: *model_type
+  uncertainty_threshold: -0.1
 
 wandb:
   project: 'cross-distill'

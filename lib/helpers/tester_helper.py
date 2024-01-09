@@ -155,14 +155,14 @@ class Tester(object):
                     average_uncertainty_depth = total_sum_depth.mean().item()
                     average_uncertainty_rgb = total_sum_rgb.mean().item()
                 decision_switch = False
-                if average_uncertainty_depth < average_uncertainty_rgb +0.1:
+                if average_uncertainty_depth < average_uncertainty_rgb + self.cfg['uncertainty_threshold']:
                     depth_smaller_than_rgb += 1
                     decision_switch = True
 
                 num_images += 1
   
                 if(decision_switch):
-                    _, outputs, _ = self.model(inputs)
+                    _, outputs, _ = self.model.centernet_depth(inputs)
                     dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
                     dets = dets.detach().cpu().numpy()
                     dets = decode_detections(dets=dets,
@@ -177,7 +177,7 @@ class Tester(object):
         if self.cfg['model_type']=="distill_separate":
             percentage_depth_smaller_than_rgb = (depth_smaller_than_rgb / num_images) * 100
             print('Percentage of images where depth uncertainty is smaller than rgb uncertainty: ', percentage_depth_smaller_than_rgb)
-            self.percentage_depth_smaller_than_rgb = percentage_depth_smaller_than_rgb
+            self.percentage_depth_chosen = percentage_depth_smaller_than_rgb
 
         # save the result for evaluation.
         self.logger.info('==> Saving ...')
@@ -213,7 +213,9 @@ class Tester(object):
     def evaluate(self):
         res = self.dataloader.dataset.eval(results_dir='./rgb_outputs/data', logger=self.logger)
         if self.cfg['model_type']=="distill_separate":
-            print(self.percentage_depth_smaller_than_rgb, res['Car_3d_easy_R40'], res['Car_3d_moderate_R40'], res['Car_3d_hard_R40'])
+            print(self.percentage_depth_chosen, res['Car_3d_easy_R40'], res['Car_3d_moderate_R40'], res['Car_3d_hard_R40'])
+            with open("wykres.txt", "a") as myfile:
+                myfile.write(str(self.percentage_depth_chosen) + " " + str(res['Car_3d_easy_R40']) + " " + str(res['Car_3d_moderate_R40']) + " " + str(res['Car_3d_hard_R40']) + " " + str(self.cfg["uncertainty_threshold"]) + "\n")
 
 
 

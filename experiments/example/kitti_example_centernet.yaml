@@ -13,7 +13,7 @@ dataset:
   random_crop: 0.5
   scale: 0.4
   shift: 0.0
-  uncertainty: True
+  uncertainty: False
 
 model:
   type: &model_type 'centernet3d'  #centernet3d or distill_seperate or distill

@@ -60,7 +60,7 @@ class CenterNet3D(nn.Module):
 
     def forward(self, input):
         if self.model_type == 'centernet3d' or self.model_type == 'distill_separate':
-            print(" inference centernet3d, modality: ", self.modality)
+            # print(" inference centernet3d, modality: ", self.modality)
             try:
                 input = input[self.modality] 
             except:

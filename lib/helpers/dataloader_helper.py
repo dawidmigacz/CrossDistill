@@ -9,7 +9,7 @@ def my_worker_init_fn(worker_id):
     np.random.seed(np.random.get_state()[1][0] + worker_id)
 
 
-def build_dataloader(cfg, workers=4):
+def build_dataloader(cfg, workers=0):
     assert cfg['type'] in ['KITTI', 'nuScenes'], "%s dataset is not supported" % cfg['type']
 
     # perpare dataset

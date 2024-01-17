@@ -2,6 +2,7 @@ import os
 import tqdm
 import pickle
 import torch
+import random
 
 from lib.helpers.save_helper import load_checkpoint
 from lib.helpers.decode_helper import extract_dets_from_outputs
@@ -23,6 +24,7 @@ class Tester(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.logger = logger
         self.eval = eval
+        self.modality = cfg.get('modality', None)
 
 
     def test(self):
@@ -62,11 +64,15 @@ class Tester(object):
     def inference(self):
         torch.set_grad_enabled(False)
         self.model.eval()
-
+        selected_depth = []
+        selected_rgb = []
         results = {}
         progress_bar = tqdm.tqdm(total=len(self.dataloader), leave=True, desc='Evaluation Progress')
-        depth_smaller_than_rgb = 0
+        switches = 0
         num_images = 0
+        self.num_img = len(self.dataloader)
+        os.makedirs('depth_images', exist_ok=True)
+        os.makedirs('rgb_images', exist_ok=True)
         for batch_idx, (inputs, targets, info) in enumerate(self.dataloader):
             img_id = info['img_id'][0].item()
             
@@ -137,9 +143,24 @@ class Tester(object):
                     # get the uncertainty
                     # print('shape of total_sum_depth: ', total_sum_depth.size())
 
-                    uncertainty_depth = total_sum_depth[0, y//4, x//4]
-                    uncertainty_rgb = total_sum_rgb[0, y//4, x//4]
-
+                    # make sure y//4 and x//4 are in bounds
+                    yy = y//4
+                    xx = x//4
+                    if yy>95:
+                        yy = 95
+                    if xx>319:
+                        xx = 319
+                    if yy<0:
+                        yy=0
+                    if xx<0:
+                        xx = 0
+                    
+                    try:
+                        uncertainty_depth = total_sum_depth[0, yy, xx]
+                        uncertainty_rgb = total_sum_rgb[0, yy, xx]
+                    except:
+                        print(xx, yy)
+                        raise KeyError
                     # Add the uncertainties to the total uncertainties
                     total_uncertainty_depth += uncertainty_depth
                     total_uncertainty_rgb += uncertainty_rgb
@@ -156,12 +177,14 @@ class Tester(object):
                     average_uncertainty_rgb = total_sum_rgb.mean().item()
                 decision_switch = False
                 if average_uncertainty_depth < average_uncertainty_rgb + self.cfg['uncertainty_threshold']:
-                    depth_smaller_than_rgb += 1
+                # if random.random() > self.cfg['uncertainty_threshold']:
+                    switches += 1
                     decision_switch = True
 
                 num_images += 1
   
                 if(decision_switch):
+                    selected_depth.append(img_id)
                     _, outputs, _ = self.model.centernet_depth(inputs)
                     dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
                     dets = dets.detach().cpu().numpy()
@@ -170,14 +193,23 @@ class Tester(object):
                                     calibs=calibs,
                                     cls_mean_size=cls_mean_size,
                                     threshold=self.cfg.get('threshold', 0.2))
+                else:
+                    selected_rgb.append(img_id)
             results.update(dets)
 
             progress_bar.update()
         progress_bar.close()
         if self.cfg['model_type']=="distill_separate":
-            percentage_depth_smaller_than_rgb = (depth_smaller_than_rgb / num_images) * 100
-            print('Percentage of images where depth uncertainty is smaller than rgb uncertainty: ', percentage_depth_smaller_than_rgb)
-            self.percentage_depth_chosen = percentage_depth_smaller_than_rgb
+            percentage_switches = (switches / num_images) * 100
+            print('Percentage of images where depth uncertainty is smaller than rgb uncertainty: ', percentage_switches)
+            self.percentage_switches = percentage_switches
+            # Zapisywanie wybranych obrazów głębi do pliku
+            with open(os.path.join('depth_images', f'depth{percentage_switches}.txt'), 'w') as f:
+                f.writelines(f'{img_id}\n' for img_id in selected_depth)
+
+            # Zapisywanie wybranych obrazów RGB do pliku
+            with open(os.path.join('rgb_images', f'rgb{percentage_switches}.txt'), 'w') as f:
+                f.writelines(f'{img_id}\n' for img_id in selected_rgb)
 
         # save the result for evaluation.
         self.logger.info('==> Saving ...')
@@ -213,10 +245,13 @@ class Tester(object):
     def evaluate(self):
         res = self.dataloader.dataset.eval(results_dir='./rgb_outputs/data', logger=self.logger)
         if self.cfg['model_type']=="distill_separate":
-            print(self.percentage_depth_chosen, res['Car_3d_easy_R40'], res['Car_3d_moderate_R40'], res['Car_3d_hard_R40'])
-            with open("wykres.txt", "a") as myfile:
-                myfile.write(str(self.percentage_depth_chosen) + " " + str(res['Car_3d_easy_R40']) + " " + str(res['Car_3d_moderate_R40']) + " " + str(res['Car_3d_hard_R40']) + " " + str(self.cfg["uncertainty_threshold"]) + "\n")
-
+            print(self.percentage_switches, res['Car_3d_easy_R40'], res['Car_3d_moderate_R40'], res['Car_3d_hard_R40'])
+            with open("wykres_dane.txt", "a") as myfile:
+                myfile.write(str(self.percentage_switches) + " " + str(res['Car_3d_easy_R40']) + " " + str(res['Car_3d_moderate_R40']) + " " + str(res['Car_3d_hard_R40']) + " " + str(self.cfg["uncertainty_threshold"]) + "\n")
+        if self.cfg['model_type']=="centernet3d":
+            print(self.num_img, res['Car_3d_easy_R40'], res['Car_3d_moderate_R40'], res['Car_3d_hard_R40'])
+            with open("tabelka_nieswitch.txt", "a") as myfile:
+                myfile.write(self.modality + str(self.num_img) + " " + str(res['Car_3d_easy_R40']) + " " + str(res['Car_3d_moderate_R40']) + " " + str(res['Car_3d_hard_R40']) + " " + str(self.cfg["uncertainty_threshold"]) + "\n")
 
 
 

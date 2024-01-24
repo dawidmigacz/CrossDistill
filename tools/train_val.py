@@ -8,7 +8,7 @@ sys.path.append(ROOT_DIR)
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "1"
 
-
+import random
 import yaml
 import argparse
 import datetime
@@ -47,12 +47,12 @@ def main():
     print("Python: ", sys.version)
     print("PyTorch: ", torch.__version__)
     print("Numpy: ", np.__version__)
-    np.random.seed(42)
-    torch.manual_seed(42)
-    os.environ["PYTHONHASHSEED"] = "42"
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    torch.set_num_threads(1)
+    # np.random.seed(42)
+    # torch.manual_seed(42)
+    # os.environ["PYTHONHASHSEED"] = "42"
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
+    # torch.set_num_threads(1)
 
     assert (os.path.exists(args.config))
     cfg = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
@@ -96,6 +96,8 @@ def main():
         #     raise ValueError('bayes_n should not be set in tester when evaluate_only is True')
         model = build_model(cfg['model'], 'testing')
         # print(model)
+
+        cfg['tester']['uncertainty_threshold'] = random.uniform(-0.13,-0.10)
         logger.info('###################  Evaluation Only  ##################')
         tester = Tester(cfg=cfg['tester'],
                         model=model,
@@ -137,7 +139,7 @@ def main():
 
     logger.info('###################  Evaluation  ##################' )
     test_model_list = build_model(cfg['model'],'testing')
-    cfg['tester']['uncertainty_threshold'] = np.random.uniform(-1.0, 1.0)
+
     tester = Tester(cfg=cfg['tester'],
                     model=test_model_list,
                     dataloader=test_loader,

@@ -38,3 +38,6 @@ __pycache__
 experiments/example/wykres.txt
 experiments/example/obrazki/*
 
+experiments/example/depth_images/*
+experiments/example/rgb_images/*
+*.txt

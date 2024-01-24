@@ -169,7 +169,7 @@ class Tester(object):
                     num_boxes += 1
 
                 # Calculate the average uncertainties
-                if num_boxes > 0:
+                if False: #num_boxes > 0:
                     average_uncertainty_depth = total_uncertainty_depth / num_boxes
                     average_uncertainty_rgb = total_uncertainty_rgb / num_boxes
                 else:
@@ -180,6 +180,14 @@ class Tester(object):
                 # if random.random() > self.cfg['uncertainty_threshold']:
                     switches += 1
                     decision_switch = True
+                # print(f'{img_id}, {decision_switch}, {average_uncertainty_depth}, {average_uncertainty_rgb}, {average_uncertainty_depth-average_uncertainty_rgb}\n')
+                if False:
+                    # Tworzenie folderu, jeśli jeszcze nie istnieje
+                    os.makedirs('uncertainties', exist_ok=True)
+
+                    # Zapisywanie identyfikatora obrazu i niepewności do pliku
+                    with open(os.path.join('uncertainties', 'uncertainties2.txt'), 'a') as f:
+                        f.write(f'{img_id}, {average_uncertainty_depth}, {average_uncertainty_rgb}, {average_uncertainty_depth-average_uncertainty_rgb}\n')
 
                 num_images += 1
   
@@ -204,11 +212,11 @@ class Tester(object):
             print('Percentage of images where depth uncertainty is smaller than rgb uncertainty: ', percentage_switches)
             self.percentage_switches = percentage_switches
             # Zapisywanie wybranych obrazów głębi do pliku
-            with open(os.path.join('depth_images', f'depth{percentage_switches}.txt'), 'w') as f:
+            with open(os.path.join('2depth_images', f'depth{percentage_switches}.txt'), 'w') as f:
                 f.writelines(f'{img_id}\n' for img_id in selected_depth)
 
             # Zapisywanie wybranych obrazów RGB do pliku
-            with open(os.path.join('rgb_images', f'rgb{percentage_switches}.txt'), 'w') as f:
+            with open(os.path.join('2rgb_images', f'rgb{percentage_switches}.txt'), 'w') as f:
                 f.writelines(f'{img_id}\n' for img_id in selected_rgb)
 
         # save the result for evaluation.

@@ -52,14 +52,14 @@ import os
 import shutil
 
 
-# move to folders
-# dir_path = './rgb_outputs/data'
-# dir_path2 = './rgb_outputs/folders_val'
-# for filename in os.listdir(dir_path):
-#     if filename.endswith('.txt'):
-#         new_dir_path = os.path.join(dir_path2, filename[:-4])
-#         os.makedirs(new_dir_path, exist_ok=True)
-#         shutil.move(os.path.join(dir_path, filename), os.path.join(new_dir_path, filename))
+
+dir_path = './depth_outputs/data'
+dir_path2 = './depth_outputs/folders_val'
+for filename in os.listdir(dir_path):
+    if filename.endswith('.txt'):
+        new_dir_path = os.path.join(dir_path2, filename[:-4])
+        os.makedirs(new_dir_path, exist_ok=True)
+        shutil.move(os.path.join(dir_path, filename), os.path.join(new_dir_path, filename))
 
 
 
@@ -68,52 +68,52 @@ import shutil
 # print(cfg)
 
 
-log_path = ROOT_DIR + "/experiments/example/logs/"
-if os.path.exists(log_path):
-    pass
-else:
-    os.mkdir(log_path)
-log_file = 'train.log.%s' % datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-logger = create_logger(log_path, log_file)
+# log_path = ROOT_DIR + "/experiments/example/logs/"
+# if os.path.exists(log_path):
+#     pass
+# else:
+#     os.mkdir(log_path)
+# log_file = 'train.log.%s' % datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+# logger = create_logger(log_path, log_file)
 
 
-dataset_cfg = {'type': 'KITTI',
-                'batch_size': 1,
-                'use_3d_center': True,
-                'class_merging': False, 
-                'use_dontcare': False, 
-                'bbox2d_type': 'anno', 
-                'meanshape': False, 
-                'writelist': ['Car'], 
-                'random_flip': 0.5, 
-                'random_crop': 0.5, 
-                'scale': 0.4, 
-                'shift': 0.0, 
-                'uncertainty': False
-                }
+# dataset_cfg = {'type': 'KITTI',
+#                 'batch_size': 1,
+#                 'use_3d_center': True,
+#                 'class_merging': False, 
+#                 'use_dontcare': False, 
+#                 'bbox2d_type': 'anno', 
+#                 'meanshape': False, 
+#                 'writelist': ['Car'], 
+#                 'random_flip': 0.5, 
+#                 'random_crop': 0.5, 
+#                 'scale': 0.4, 
+#                 'shift': 0.0, 
+#                 'uncertainty': False
+#                 }
 
 
-tester_cfg = {'type': 'KITTI', 
-              'mode': 'single', 
-              'checkpoint': './models/rgb_pretrain.pth', 
-              'checkpoints_dir': 'distill', 
-              'threshold': 0.2, 
-              'bayes_n': None, 
-              'model_type': 'centernet3d', 
-              'uncertainty_threshold': -0.1
-              }
+# tester_cfg = {'type': 'KITTI', 
+#               'mode': 'single', 
+#               'checkpoint': './models/rgb_pretrain.pth', 
+#               'checkpoints_dir': 'distill', 
+#               'threshold': 0.2, 
+#               'bayes_n': None, 
+#               'model_type': 'centernet3d', 
+#               'uncertainty_threshold': -0.1
+#               }
 
-dir_path = './rgb_outputs/folders_val'
-for foldername in os.listdir(dir_path):
-    if os.path.isdir(os.path.join(dir_path, foldername)):
-        with open('../../data/KITTI/ImageSets/val.txt', 'w') as f:
-            f.write(f'{foldername}\n')
-    train_loader, test_loader  = build_dataloader(dataset_cfg)
-    print(dir_path+foldername)
-    res=test_loader.dataset.eval(results_dir=dir_path+foldername, logger=logger)
-    print(res)
-    print(foldername)
-    raise KeyboardInterrupt
+# dir_path = './depth_outputs/folders_val'
+# for foldername in os.listdir(dir_path):
+#     if os.path.isdir(os.path.join(dir_path, foldername)):
+#         with open('../../data/KITTI/ImageSets/val.txt', 'w') as f:
+#             f.write(f'{foldername}\n')
+#     train_loader, test_loader  = build_dataloader(dataset_cfg)
+#     print(dir_path+foldername)
+#     res=test_loader.dataset.eval(results_dir=dir_path+foldername, logger=logger)
+#     print(res)
+#     print(foldername)
+#     raise KeyboardInterrupt
 
 
 

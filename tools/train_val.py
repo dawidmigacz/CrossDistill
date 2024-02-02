@@ -97,7 +97,7 @@ def main():
         model = build_model(cfg['model'], 'testing')
         # print(model)
 
-        cfg['tester']['uncertainty_threshold'] = random.uniform(-0.13,-0.10)
+        cfg['tester']['uncertainty_threshold'] = random.uniform(-0.5,0.5)
         logger.info('###################  Evaluation Only  ##################')
         tester = Tester(cfg=cfg['tester'],
                         model=model,

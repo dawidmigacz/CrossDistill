@@ -1,0 +1,63 @@
+random_seed: 444
+
+dataset:
+  type: &dataset_type 'KITTI'
+  batch_size: 1
+  use_3d_center: True
+  class_merging: False
+  use_dontcare: False
+  bbox2d_type: 'anno'   # 'proj' or 'anno'
+  meanshape: False      # use predefined anchor or not
+  writelist: ['Car']
+  random_flip: 0.5
+  random_crop: 0.5
+  scale: 0.4
+  shift: 0.0
+  uncertainty: False
+  values_flag: True
+
+model:
+  type: &model_type 'distill_values'  #centernet3d or distill_separate or distill or distill_values
+  backbone: 'dla34'
+  neck: 'DLAUp'
+  num_class: 3
+  drop_prob: &drop_prob 0.15 # dropout rate
+
+optimizer:
+  type: 'adam'
+  lr: 0.00125
+  weight_decay: 0.00001
+
+lr_scheduler:
+  warmup: True  # 5 epochs, cosine warmup, init_lir=0.00001 in default
+  decay_rate: 0.1
+  decay_list: [200, 280] # [90, 120] 
+
+trainer:
+  max_epoch: &max_epoch 300
+  gpu_ids: 2,3
+  save_frequency: 10 # checkpoint save interval (in epoch)
+  model_save_path: 'distill'
+  pretrain_model: {'rgb':'./models/rgb_db015_checkpoint_epoch_300.pth','depth':'./models/depth_db015_checkpoint_epoch_300.pth'}
+  #resume_model: {'rgb':'checkpoints_share_head/checkpoint_epoch_300_rgb.pth','depth':'checkpoints_no_distill_seperate/checkpoint_epoch_140_depth.pth'}
+
+
+tester:
+  type: *dataset_type
+  mode: single   # 'single' or 'all'
+  checkpoint: './distill/MERGED.pth'  # for 'single' mode
+  checkpoints_dir: 'distill'  # for 'all' model
+  threshold: 0.2  # confidence filter
+  bayes_n: 40
+  model_type: *model_type
+  uncertainty_threshold: -0.1
+
+wandb:
+  project: 'cross-distill'
+  notes: 'distill_separate'
+  tags: ['distill_separate']
+  config:
+    dataset: *dataset_type
+    model: *model_type
+    drop_prob: *drop_prob
+    epochs: *max_epoch

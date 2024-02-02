@@ -75,7 +75,8 @@ class Tester(object):
         os.makedirs('rgb_images', exist_ok=True)
         for batch_idx, (inputs, targets, info) in enumerate(self.dataloader):
             img_id = info['img_id'][0].item()
-            
+            value_depth = targets['values_depth']
+            value_rgb = targets['values_rgb']
             if(self.cfg['model_type']=="distill_separate"):
 
                 unc_rgb = targets['unc_rgb']
@@ -106,8 +107,8 @@ class Tester(object):
                 inputs[key] = inputs[key].to(self.device)
             #inputs = inputs.to(self.device)
 
-            if(self.cfg['model_type']=="distill_separate"):
-                _, outputs, _ = self.model.centernet_rgb(inputs)
+            if(self.cfg['model_type']=="distill_separate" or self.cfg['model_type']=="distill_values"):
+                _, outputs, _ = self.model.centernet_rgb(inputs["rgb"])
             else:
                 _, outputs, _ = self.model(inputs)
             dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
@@ -132,6 +133,19 @@ class Tester(object):
             num_boxes = 0
 
             # print(r[img_id])
+
+            if self.cfg['model_type']=="distill_values":
+                value_rgb = targets['values_rgb']
+                value_depth = targets['values_depth']
+                decision_switch = False
+                if value_depth < value_rgb + self.cfg['uncertainty_threshold']:
+                    print(f'{img_id}, {value_depth}, {value_rgb}, {value_depth-value_rgb}\n')
+                    decision_switch = True
+                    switches += 1
+                num_images += 1
+
+
+
             if(self.cfg['model_type']=="distill_separate"):
             # Iterate over each bounding box
                 for box in r[img_id]:
@@ -191,33 +205,41 @@ class Tester(object):
 
                 num_images += 1
   
-                if(decision_switch):
-                    selected_depth.append(img_id)
-                    _, outputs, _ = self.model.centernet_depth(inputs)
-                    dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
-                    dets = dets.detach().cpu().numpy()
-                    dets = decode_detections(dets=dets,
-                                    info=info,
-                                    calibs=calibs,
-                                    cls_mean_size=cls_mean_size,
-                                    threshold=self.cfg.get('threshold', 0.2))
-                else:
-                    selected_rgb.append(img_id)
+            if(decision_switch):
+                selected_depth.append(img_id)
+                _, outputs, _ = self.model.centernet_depth(inputs["depth"])
+                dets = extract_dets_from_outputs(outputs=outputs, K=self.max_objs)
+                dets = dets.detach().cpu().numpy()
+                dets = decode_detections(dets=dets,
+                                info=info,
+                                calibs=calibs,
+                                cls_mean_size=cls_mean_size,
+                                threshold=self.cfg.get('threshold', 0.2))
+                print("switched to depth", img_id)
+            else:
+                selected_rgb.append(img_id)
+
+
+            
             results.update(dets)
 
             progress_bar.update()
         progress_bar.close()
-        if self.cfg['model_type']=="distill_separate":
+        if self.cfg['model_type']=="distill_separate" or self.cfg['model_type']=="distill_values":
             percentage_switches = (switches / num_images) * 100
             print('Percentage of images where depth uncertainty is smaller than rgb uncertainty: ', percentage_switches)
             self.percentage_switches = percentage_switches
-            # Zapisywanie wybranych obrazów głębi do pliku
-            with open(os.path.join('2depth_images', f'depth{percentage_switches}.txt'), 'w') as f:
+            # make folders for the selected images
+            os.makedirs('3depth_images', exist_ok=True)
+            os.makedirs('3rgb_images', exist_ok=True)
+
+            with open(os.path.join('3depth_images', f'depth{percentage_switches}.txt'), 'w') as f:
                 f.writelines(f'{img_id}\n' for img_id in selected_depth)
 
-            # Zapisywanie wybranych obrazów RGB do pliku
-            with open(os.path.join('2rgb_images', f'rgb{percentage_switches}.txt'), 'w') as f:
+
+            with open(os.path.join('3rgb_images', f'rgb{percentage_switches}.txt'), 'w') as f:
                 f.writelines(f'{img_id}\n' for img_id in selected_rgb)
+            
 
         # save the result for evaluation.
         self.logger.info('==> Saving ...')

@@ -37,6 +37,10 @@ class KITTI_Dataset(data.Dataset):
         self.class_merging = cfg.get('class_merging', False)
         self.use_dontcare = cfg.get('use_dontcare', False)
         self.uncertainty = cfg.get('uncertainty', False)
+        self.values_flag = cfg.get('values_flag', False)
+        if self.values_flag:
+            self.values_depth_dir = os.path.join(self.root_dir, 'object', 'training', 'values_depth')
+            self.values_rgb_dir = os.path.join(self.root_dir, 'object', 'training', 'values_rgb')
 
         if self.class_merging:  # False
             self.writelist.extend(['Van', 'Truck'])
@@ -124,8 +128,22 @@ class KITTI_Dataset(data.Dataset):
         with open(unc_rgb_file, 'rb') as f:
             data = pickle.load(f)
         return data
+    
+    def get_values_rgb(self, idx):
+        unc_rgb_file = os.path.join(self.values_rgb_dir, '%06d.pkl' % idx)
+        assert os.path.exists(unc_rgb_file)
+        with open(unc_rgb_file, 'rb') as f:
+            data = pickle.load(f)
+        return data
+    
+    def get_values_depth(self, idx):
+        unc_depth_file = os.path.join(self.values_depth_dir, '%06d.pkl' % idx)
+        assert os.path.exists(unc_depth_file)
+        with open(unc_depth_file, 'rb') as f:
+            data = pickle.load(f)
+        return data
 
-    def eval(self, results_dir, logger):
+    def eval(self, results_dir, logger, overlap_logger=None):
         logger.info("==> Loading detections and GTs...")
         img_ids = [int(id) for id in self.idx_list]
 
@@ -136,7 +154,7 @@ class KITTI_Dataset(data.Dataset):
 
         logger.info('==> Evaluating (official) ...')
         for category in self.writelist:
-            results_str, results_dict = get_official_eval_result(gt_annos, dt_annos, test_id[category])
+            results_str, results_dict = get_official_eval_result(gt_annos, dt_annos, test_id[category], overlap_logger=overlap_logger)
             logger.info(results_str)
         return results_dict
 
@@ -158,6 +176,10 @@ class KITTI_Dataset(data.Dataset):
         if self.uncertainty:
             depth_unc = self.get_uncertainty_depth(index)
             rgb_unc = self.get_uncertainty_rgb(index)
+
+        if self.values_flag:
+            depth_values = self.get_values_depth(index)
+            rgb_values = self.get_values_rgb(index)
 
         calib = self.get_calib(index)
         img_size = np.array(img.size)
@@ -359,6 +381,10 @@ class KITTI_Dataset(data.Dataset):
         if self.uncertainty:
             targets['unc_depth'] = depth_unc
             targets['unc_rgb'] = rgb_unc
+
+        if self.values_flag:
+            targets['values_depth'] = depth_values
+            targets['values_rgb'] = rgb_values
         return inputs, targets, info
 
 

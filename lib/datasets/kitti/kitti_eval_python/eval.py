@@ -529,7 +529,8 @@ def eval_class(gt_annos,
                min_overlaps,
                compute_aos=False,
                num_parts=50,
-               DIForDIS=True):
+               DIForDIS=True,
+               overlap_logger=None):
     """Kitti eval. support 2d/bev/3d/aos eval. support 0.5:0.05:0.95 coco AP.
     Args:
         gt_annos: dict, must from get_label_annos() in kitti_common.py
@@ -551,6 +552,23 @@ def eval_class(gt_annos,
 
     rets = calculate_iou_partly(dt_annos, gt_annos, metric, num_parts)
     overlaps, parted_overlaps, total_dt_num, total_gt_num = rets
+    # print("overlaps", overlaps)
+    overlap = []
+    # if overlap_logger is not None:
+    #     overlap = []
+    #     for i in range(len(overlaps)):
+    #         overlap.append(np.max(overlaps[i], axis=1))
+    #     overlap = np.mean(overlap)
+    #     overlap_logger.log(overlap)
+    #     # print("overlap", overlap)
+    
+    if overlap_logger is not None:
+        overlap = []
+        for i in range(len(overlaps)):
+            overlap.append(np.nanmax(overlaps[i], axis=1))
+        overlap = np.nan_to_num(np.nanmean(overlap))
+        overlap_logger.log(overlap)
+
     N_SAMPLE_PTS = 41
     num_minoverlap = len(min_overlaps)
     num_class = len(current_classes)
@@ -628,6 +646,7 @@ def eval_class(gt_annos,
         "recall": recall,
         "precision": precision,
         "orientation": aos,
+        "overlap": overlap,
     }
     return ret_dict
 
@@ -661,11 +680,12 @@ def do_eval(gt_annos,
             min_overlaps,
             compute_aos=False,
             PR_detail_dict=None,
-            DIForDIS=True):
+            DIForDIS=True,
+            overlap_logger=None):
     # min_overlaps: [num_minoverlap, metric, num_class]
     difficultys = [0, 1, 2]
     ret = eval_class(gt_annos, dt_annos, current_classes, difficultys, 0,
-                     min_overlaps, compute_aos, DIForDIS=DIForDIS)
+                     min_overlaps, compute_aos, DIForDIS=DIForDIS, overlap_logger=None)
     # ret: [num_class, num_diff, num_minoverlap, num_sample_points]
     mAP_bbox = get_mAP(ret["precision"])
     mAP_bbox_R40 = get_mAP_R40(ret["precision"])
@@ -682,7 +702,7 @@ def do_eval(gt_annos,
             PR_detail_dict['aos'] = ret['orientation']
 
     ret = eval_class(gt_annos, dt_annos, current_classes, difficultys, 1,
-                     min_overlaps, DIForDIS=DIForDIS)
+                     min_overlaps, DIForDIS=DIForDIS, overlap_logger=None)
     mAP_bev = get_mAP(ret["precision"])
     mAP_bev_R40 = get_mAP_R40(ret["precision"])
 
@@ -690,7 +710,7 @@ def do_eval(gt_annos,
         PR_detail_dict['bev'] = ret['precision']
 
     ret = eval_class(gt_annos, dt_annos, current_classes, difficultys, 2,
-                     min_overlaps, DIForDIS=DIForDIS)
+                     min_overlaps, DIForDIS=DIForDIS, overlap_logger=overlap_logger)
     mAP_3d = get_mAP(ret["precision"])
     mAP_3d_R40 = get_mAP_R40(ret["precision"])
     if PR_detail_dict is not None:
@@ -699,14 +719,14 @@ def do_eval(gt_annos,
 
 
 def do_coco_style_eval(gt_annos, dt_annos, current_classes, overlap_ranges,
-                       compute_aos):
+                       compute_aos, overlap_logger=None):
     # overlap_ranges: [range, metric, num_class]
     min_overlaps = np.zeros([10, *overlap_ranges.shape[1:]])
     for i in range(overlap_ranges.shape[1]):
         for j in range(overlap_ranges.shape[2]):
             min_overlaps[:, i, j] = np.linspace(*overlap_ranges[:, i, j])
     mAP_bbox, mAP_bev, mAP_3d, mAP_aos = do_eval(
-        gt_annos, dt_annos, current_classes, min_overlaps, compute_aos)
+        gt_annos, dt_annos, current_classes, min_overlaps, compute_aos, overlap_logger=overlap_logger)
     # ret: [num_class, num_diff, num_minoverlap]
     mAP_bbox = mAP_bbox.mean(-1)
     mAP_bev = mAP_bev.mean(-1)
@@ -716,7 +736,7 @@ def do_coco_style_eval(gt_annos, dt_annos, current_classes, overlap_ranges,
     return mAP_bbox, mAP_bev, mAP_3d, mAP_aos
 
 
-def get_official_eval_result(gt_annos, dt_annos, current_classes, PR_detail_dict=None):
+def get_official_eval_result(gt_annos, dt_annos, current_classes, PR_detail_dict=None, overlap_logger=None):
     overlap_0_7 = np.array([[0.7, 0.5, 0.5, 0.7,
                              0.5, 0.7], [0.7, 0.5, 0.5, 0.7, 0.5, 0.7],
                             [0.7, 0.5, 0.5, 0.7, 0.5, 0.7]])
@@ -753,7 +773,7 @@ def get_official_eval_result(gt_annos, dt_annos, current_classes, PR_detail_dict
             break
 
     mAPbbox, mAPbev, mAP3d, mAPaos, mAPbbox_R40, mAPbev_R40, mAP3d_R40, mAPaos_R40 = do_eval(
-        gt_annos, dt_annos, current_classes, min_overlaps, compute_aos, PR_detail_dict=PR_detail_dict, DIForDIS=True)
+        gt_annos, dt_annos, current_classes, min_overlaps, compute_aos, PR_detail_dict=PR_detail_dict, DIForDIS=True, overlap_logger=overlap_logger)
 
     ret_dict = {}
     for j, curcls in enumerate(current_classes):
@@ -833,7 +853,7 @@ def get_official_eval_result(gt_annos, dt_annos, current_classes, PR_detail_dict
     return result, ret_dict
 
 
-def get_distance_eval_result(gt_annos, dt_annos, current_classes, PR_detail_dict=None):
+def get_distance_eval_result(gt_annos, dt_annos, current_classes, PR_detail_dict=None, overlap_logger=None):
     overlap_0_7 = np.array([[0.7, 0.5, 0.5, 0.7,
                              0.5, 0.7], [0.7, 0.5, 0.5, 0.7, 0.5, 0.7],
                             [0.7, 0.5, 0.5, 0.7, 0.5, 0.7]])
@@ -870,7 +890,7 @@ def get_distance_eval_result(gt_annos, dt_annos, current_classes, PR_detail_dict
             break
 
     mAPbbox, mAPbev, mAP3d, mAPaos, mAPbbox_R40, mAPbev_R40, mAP3d_R40, mAPaos_R40 = do_eval(
-        gt_annos, dt_annos, current_classes, min_overlaps, compute_aos, PR_detail_dict=PR_detail_dict, DIForDIS=False)
+        gt_annos, dt_annos, current_classes, min_overlaps, compute_aos, PR_detail_dict=PR_detail_dict, DIForDIS=False, overlap_logger=overlap_logger)
 
     ret_dict = {}
     for j, curcls in enumerate(current_classes):

@@ -68,6 +68,10 @@ import shutil
 # print(cfg)
 
 
+
+
+
+
 log_path = ROOT_DIR + "/experiments/example/logs/"
 if os.path.exists(log_path):
     pass
@@ -102,18 +106,41 @@ tester_cfg = {'type': 'KITTI',
               'model_type': 'centernet3d', 
               'uncertainty_threshold': -0.1
               }
+n = 0
 
-dir_path = './rgb_outputs/folders_val'
+
+class OverlapLogger:
+    def __init__(self, filename):
+        self.filename = filename
+        self.current_image = None
+        #clear file
+        with open(self.filename, 'w') as file:
+            file.write('')
+
+    def log(self, message):
+        with open(self.filename, 'a') as file:
+            file.write(f'{self.current_image} {message}\n')
+
+# Usage
+overlap_logger = OverlapLogger('logfile_depth.txt')
+
+dir_path = './depth_outputs/folders_val'
+os.makedirs(dir_path, exist_ok=True)
 for foldername in os.listdir(dir_path):
     if os.path.isdir(os.path.join(dir_path, foldername)):
         with open('../../data/KITTI/ImageSets/val.txt', 'w') as f:
             f.write(f'{foldername}\n')
     train_loader, test_loader  = build_dataloader(dataset_cfg)
     print(dir_path+foldername)
-    res=test_loader.dataset.eval(results_dir=dir_path+foldername, logger=logger)
-    print(res)
+    overlap_logger.current_image = foldername
+    res=test_loader.dataset.eval(results_dir=dir_path+'/'+foldername, logger=logger, overlap_logger=overlap_logger)
+
+    logger.info(foldername)
+    logger.info(res)
     print(foldername)
-    raise KeyboardInterrupt
+    # n+=1
+    # if n==5:
+    #     raise Exception('stop')
 
 
 

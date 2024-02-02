@@ -9,7 +9,7 @@ def build_model(cfg, flag):
     elif cfg['type'] == 'distill':
         return MonoDistill(backbone=cfg['backbone'], neck=cfg['neck'], num_class=cfg['num_class'], flag=flag, model_type=cfg['type'])
 
-    elif cfg['type'] == 'distill_separate':
+    elif cfg['type'] == 'distill_separate' or cfg['type'] == 'distill_values':
         return CrossDistillSeparate(backbone=cfg['backbone'], neck=cfg['neck'], num_class=cfg['num_class'], flag=flag, model_type=cfg['type'])
 
     else:

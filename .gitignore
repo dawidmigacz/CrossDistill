@@ -41,3 +41,9 @@ experiments/example/obrazki/*
 experiments/example/depth_images/*
 experiments/example/rgb_images/*
 *.txt
+lib/models/__pycache__/centernet3d.cpython-311.pyc
+*.pyc
+*__pycache__*
+lib/helpers/__pycache__/dataloader_helper.cpython-311.pyc
+lib/helpers/__pycache__/model_helper.cpython-311.pyc
+lib/helpers/__pycache__/tester_helper.cpython-311.pyc

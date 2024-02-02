@@ -21,7 +21,7 @@ model:
   neck: 'DLAUp' 
   num_class: 3 
   drop_prob: &drop_prob 0.15 # dropout rate
-  modality: &modality 'rgb'     # 'rgb' or 'depth'
+  modality: &modality 'depth'     # 'rgb' or 'depth'
 
 optimizer:
   type: &optimizer_type 'adam' 
@@ -43,7 +43,7 @@ trainer:
 tester:
   type: *dataset_type # 'KITTI'
   mode: 'single'   # 'single' or 'all'
-  checkpoint: './models/rgb_pretrain.pth'  # for 'single' mode  # db01_
+  checkpoint: './models/depth_pretrain.pth'  # for 'single' mode  # db01_
   checkpoints_dir: 'models'  # for 'all' model
   threshold: 0.2  # confidence filter
   bayes_n: 40

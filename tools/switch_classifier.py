@@ -166,8 +166,9 @@ train_loader, test_loader = build_dataloader(dataset_cfg)
 
 #     print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}')
 
-num_epochs = 0
+num_epochs = 40
 for epoch in range(num_epochs):
+    model.train()
     for batch_idx, (inputs, targets, info) in tqdm(enumerate(train_loader), total=len(train_loader)):
         # Move the inputs and targets to the GPU
         inputs = {k: v.to(device) for k, v in inputs.items()}
@@ -179,16 +180,26 @@ for epoch in range(num_epochs):
         loss = criterion(outputs, (targets['values_depth']-targets['values_rgb']).unsqueeze(1).float())
         loss.backward()
         optimizer.step()
-        wandb.log({"loss": loss.item()})
-    print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}')
+
+    model.eval()
+    test_loss = 0
+    with torch.no_grad():
+        for inputs, targets, info in tqdm(test_loader):
+            inputs = {k: v.to(device) for k, v in inputs.items()}
+            targets = {k: v.to(device) for k, v in targets.items()}
+            outputs = model(inputs['rgb'])
+            test_loss += criterion(outputs, (targets['values_depth']-targets['values_rgb']).unsqueeze(1).float()).item()
+    test_loss /= len(test_loader)
+    
+    print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}, Test Loss: {test_loss} ')
 # Save checkpoint every 10 epochs
-    if (epoch + 1) % 10 == 0:
+    if (epoch + 1) % 3 == 0:
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'loss': loss,
-        }, f"checkpoint_{epoch+1}.pth")
+        }, f"checkpoint__{epoch+1}.pth")
 
 wandb.finish()
 # Evaluating the model

@@ -53,14 +53,14 @@ import os
 import shutil
 
 
-# move to folders
-# dir_path = './rgb_outputs/data'
-# dir_path2 = './rgb_outputs/folders_val'
-# for filename in os.listdir(dir_path):
-#     if filename.endswith('.txt'):
-#         new_dir_path = os.path.join(dir_path2, filename[:-4])
-#         os.makedirs(new_dir_path, exist_ok=True)
-#         shutil.move(os.path.join(dir_path, filename), os.path.join(new_dir_path, filename))
+
+dir_path = './depth_outputs/data'
+dir_path2 = './depth_outputs/folders_val'
+for filename in os.listdir(dir_path):
+    if filename.endswith('.txt'):
+        new_dir_path = os.path.join(dir_path2, filename[:-4])
+        os.makedirs(new_dir_path, exist_ok=True)
+        shutil.move(os.path.join(dir_path, filename), os.path.join(new_dir_path, filename))
 
 
 
@@ -73,13 +73,13 @@ import shutil
 
 
 
-log_path = ROOT_DIR + "/experiments/example/logs/"
-if os.path.exists(log_path):
-    pass
-else:
-    os.mkdir(log_path)
-log_file = 'train.log.%s' % datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-logger = create_logger(log_path, log_file)
+# log_path = ROOT_DIR + "/experiments/example/logs/"
+# if os.path.exists(log_path):
+#     pass
+# else:
+#     os.mkdir(log_path)
+# log_file = 'train.log.%s' % datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+# logger = create_logger(log_path, log_file)
 
 
 dataset_cfg = {'type': 'KITTI',

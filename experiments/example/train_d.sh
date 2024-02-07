@@ -13,7 +13,6 @@
 CONFIG=$1
 
 module load CUDA/12.0.0
-cp ../../data/KITTI/ImageSets/orig/val.txt ../../data/KITTI/ImageSets/val.txt
-python ../../tools/train_val.py --config kitti_example_values.yaml -e
+python ../../tools/switch_classifier.py
 
 

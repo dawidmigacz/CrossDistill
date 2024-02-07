@@ -2,4 +2,5 @@
 
 CONFIG=$1
 
-python ../../tools/train_val.py --config ${CONFIG}
+module load CUDA/12.0.0
+python ../../tools/switch_classifier.py
